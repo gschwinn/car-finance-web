@@ -81,28 +81,28 @@ export default function PurchaseForm({ initial, onSave, onCancel }) {
         <FormField label="MSRP">
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
-            <input className="input pl-6" type="number" min="0" step="100" placeholder="0"
+            <input className="input pl-6" type="number" min="0" placeholder="0"
               value={form.msrp || ''} onChange={e => set('msrp', num(e.target.value))} />
           </div>
         </FormField>
         <FormField label="Negotiated Price *">
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
-            <input className="input pl-6" type="number" min="0" step="100" placeholder="0"
+            <input className="input pl-6" type="number" min="0" placeholder="0"
               value={form.negotiatedPrice || ''} onChange={e => set('negotiatedPrice', num(e.target.value))} required />
           </div>
         </FormField>
         <FormField label="Down Payment">
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
-            <input className="input pl-6" type="number" min="0" step="100" placeholder="0"
+            <input className="input pl-6" type="number" min="0" placeholder="0"
               value={form.downPayment || ''} onChange={e => set('downPayment', num(e.target.value))} />
           </div>
         </FormField>
         <FormField label="Trade-In Value">
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
-            <input className="input pl-6" type="number" min="0" step="100" placeholder="0"
+            <input className="input pl-6" type="number" min="0" placeholder="0"
               value={form.tradeInValue || ''} onChange={e => set('tradeInValue', num(e.target.value))} />
           </div>
         </FormField>
@@ -128,7 +128,7 @@ export default function PurchaseForm({ initial, onSave, onCancel }) {
       <div className="grid grid-cols-2 gap-4">
         <FormField label="APR (%)" hint="e.g. 4.9 for 4.9%">
           <div className="relative">
-            <input className="input pr-6" type="number" min="0" max="30" step="0.01" placeholder="0.00"
+            <input className="input pr-6" type="number" min="0" max="30" placeholder="0.00"
               value={form.interestRate ? (form.interestRate * 100).toFixed(2) : ''}
               onChange={e => set('interestRate', num(e.target.value) / 100)} />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
@@ -136,7 +136,7 @@ export default function PurchaseForm({ initial, onSave, onCancel }) {
         </FormField>
         <FormField label="Tax Rate (%)" hint="e.g. 8.5 for 8.5%">
           <div className="relative">
-            <input className="input pr-6" type="number" min="0" max="20" step="0.01" placeholder="0.00"
+            <input className="input pr-6" type="number" min="0" max="20" placeholder="6.00"
               value={form.taxRate ? (form.taxRate * 100).toFixed(2) : ''}
               onChange={e => set('taxRate', num(e.target.value) / 100)} />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
