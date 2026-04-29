@@ -106,6 +106,13 @@ export default function PurchaseForm({ initial, onSave, onCancel }) {
               value={form.tradeInValue || ''} onChange={e => set('tradeInValue', num(e.target.value))} />
           </div>
         </FormField>
+        <FormField label="Incentives">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
+            <input className="input pl-6" type="number" min="0" placeholder="0"
+              value={form.mfrIncentives || ''} onChange={e => set('mfrIncentives', num(e.target.value))} />
+          </div>
+        </FormField>
       </div>
 
       {/* ── Loan terms ── */}

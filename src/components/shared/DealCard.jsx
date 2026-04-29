@@ -7,6 +7,7 @@ export default function DealCard({ deal, onEdit, onDelete, compact = false }) {
   const monthly  = dealMonthly(deal)
   const total    = dealTotal(deal)
   const termMos  = dealTermMonths(deal)
+  const effectivePayment  = dealTotal(deal)/dealTermMonths(deal)
   const name     = dealDisplayName(deal)
 
   return (
@@ -23,7 +24,7 @@ export default function DealCard({ deal, onEdit, onDelete, compact = false }) {
           </div>
           <h3 className="font-semibold text-slate-100 truncate">{name}</h3>
           {deal.trimLevel && (
-            <p className="text-xs text-slate-500 mt-0.5">{deal.trimLevel}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{deal.carModel}-{ deal.trimLevel}</p>
           )}
         </div>
 
@@ -59,17 +60,19 @@ export default function DealCard({ deal, onEdit, onDelete, compact = false }) {
             <span className="font-mono font-semibold text-slate-200">{formatCurrency(total)}</span>
           </div>
         )}
-        <div className="stat-tile">
-          <span className="text-xs text-slate-500 mb-0.5">Term</span>
-          <span className="font-mono font-semibold text-slate-200">{termMos} mo</span>
-        </div>
+        {!compact && (
+          <div className="stat-tile">
+            <span className="text-xs text-slate-500 mb-0.5">Effective</span>
+            <span className="font-mono font-semibold text-slate-200">{formatCurrency(effectivePayment)}</span>
+          </div>
+        )}
       </div>
 
       {/* ── Subtitle detail ── */}
       <div className="flex items-center gap-3 mt-2.5 text-xs text-slate-500">
         <span className="flex items-center gap-1">
           <TrendingDown size={11} />
-          {formatCurrency(deal.downPayment)} down
+          {formatCurrency(deal.downPayment)} down for {termMos} months
         </span>
         <span className="flex items-center gap-1">
           <Clock size={11} />

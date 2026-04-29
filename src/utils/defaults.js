@@ -17,6 +17,7 @@ export const defaultPurchase = () => ({
   loanTermMonths:   60,
   interestRate:     0,             // decimal e.g. 0.049
   taxRate:          0,             // decimal e.g. 0.085
+  mfrIncentives:    0,
 })
 
 export const defaultLease = () => ({
@@ -29,6 +30,8 @@ export const defaultLease = () => ({
   carYear:                 new Date().getFullYear(),
   trimLevel:               '',
   msrp:                    0,
+  negotiatedPrice:  0,
+  mfrIncentives:    0,     
   residualPercent:         0.55,   // decimal
   moneyFactor:             0.00125,
   leaseTermMonths:         36,
@@ -36,6 +39,7 @@ export const defaultLease = () => ({
   downPayment:             0,      // cap cost reduction
   acquisitionFee:          0,
   taxRate:                 0,
+  //interestRate:            moneyFactor * 2400,             // decimal e.g. 0.049
 })
 
 export const LOAN_TERMS    = [24, 36, 48, 60, 72, 84]

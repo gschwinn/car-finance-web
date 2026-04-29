@@ -1,7 +1,7 @@
 // components/Lease/LeaseForm.jsx
 import { useState, useEffect } from 'react'
 import { FormField, SectionDivider, StatTile } from '../shared/UI.jsx'
-import { leaseMonthlyPayment, leaseTotalCost, leaseResidualValue, moneyFactorToAPR, formatCurrency } from '../../utils/calculations.js'
+import { leaseMonthlyPayment, leaseTotalCost,leaseDueAtSigning,  leaseResidualValue, moneyFactorToAPR, formatCurrency } from '../../utils/calculations.js'
 import { defaultLease, LEASE_TERMS, MILEAGE_OPTS } from '../../utils/defaults.js'
 
 export default function LeaseForm({ initial, onSave, onCancel }) {
@@ -17,6 +17,7 @@ export default function LeaseForm({ initial, onSave, onCancel }) {
   const preview = form.msrp > 0 ? {
     monthly:   leaseMonthlyPayment(form),
     total:     leaseTotalCost(form),
+    dueAtSigning:     leaseDueAtSigning(form),
     residual:  leaseResidualValue(form),
     equivAPR:  moneyFactorToAPR(form.moneyFactor),
   } : null
@@ -36,7 +37,7 @@ export default function LeaseForm({ initial, onSave, onCancel }) {
       {preview && (
         <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-surface-700/40 border border-surface-600/40">
           <StatTile label="Monthly"  value={formatCurrency(preview.monthly)}  accent="text-success" />
-          <StatTile label="Residual" value={formatCurrency(preview.residual)} accent="text-accent" />
+          <StatTile label="Due as Signing" value={formatCurrency(preview.dueAtSigning)} accent="text-accent" />
           <StatTile label="Equiv APR" value={`${preview.equivAPR.toFixed(2)}%`} accent="text-warning" />
         </div>
       )}
@@ -79,6 +80,20 @@ export default function LeaseForm({ initial, onSave, onCancel }) {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
             <input className="input pl-6" type="number" min="0" placeholder="50000"
               value={form.msrp || ''} onChange={e => set('msrp', num(e.target.value))} required />
+          </div>
+        </FormField>
+        <FormField label="Negotiated Price *">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
+            <input className="input pl-6" type="number" min="0" placeholder="0"
+              value={form.negotiatedPrice || ''} onChange={e => set('negotiatedPrice', num(e.target.value))} required />
+          </div>
+        </FormField>
+        <FormField label="Mfr Incentives">
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
+            <input className="input pl-6" type="number" min="0" placeholder="0"
+              value={form.mfrIncentives || ''} onChange={e => set('mfrIncentives', num(e.target.value))} required />
           </div>
         </FormField>
         <FormField label="Residual %" hint="e.g. 55 for 55%">

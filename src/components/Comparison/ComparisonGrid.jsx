@@ -43,6 +43,12 @@ const KEY_ROWS = [
     format:   v => formatCurrency(v),
     lower:    true,
   },
+  //{
+  //  label:    'Money Factor',
+  //  getValue: d => d.moneyFactor,
+  //  format:   v => formatPercent(v),
+  //  lower:    true,
+  //},
 ]
 
 export default function ComparisonGrid({ deals }) {

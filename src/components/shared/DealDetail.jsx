@@ -5,7 +5,7 @@ import { Pencil } from 'lucide-react'
 import { StatTile, DealTypeBadge } from './UI.jsx'
 import {
   formatCurrency, formatPercent, formatNumber,
-  dealMonthly, dealTotal, dealDisplayName, dealSummaryRows,
+  dealMonthly, dealTermMonths, dealTotal, dealDisplayName, dealSummaryRows,
   purchaseTotalInterest,
   leaseResidualValue, moneyFactorToAPR,
 } from '../../utils/calculations.js'
@@ -14,11 +14,13 @@ export default function DealDetail({ deal, onEdit }) {
   const monthly  = dealMonthly(deal)
   const total    = dealTotal(deal)
   const rows     = dealSummaryRows(deal)
+  const effectivePayment  = dealTotal(deal)/dealTermMonths(deal)
   const name     = dealDisplayName(deal)
 
   const accent3 = deal.type === 'purchase'
     ? { label: 'Total Interest', value: formatCurrency(purchaseTotalInterest(deal)), accent: 'text-warning' }
-    : { label: 'Residual',       value: formatCurrency(leaseResidualValue(deal)),     accent: 'text-purple-400' }
+    //: { label: 'Residual',       value: formatCurrency(leaseResidualValue(deal)),     accent: 'text-purple-400' }
+    : { label: 'Effective Pmt',       value: formatCurrency(effectivePayment),     accent: 'text-purple-400' }
 
   return (
     <div className="p-6 space-y-5">

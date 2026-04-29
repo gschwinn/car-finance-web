@@ -33,13 +33,18 @@ export function leaseResidualValue(deal) {
 
 export function leaseMonthlyPayment(deal) {
   const residual    = leaseResidualValue(deal)
-  const depreciation = (deal.msrp - residual) / deal.leaseTermMonths
-  const finance      = (deal.msrp + residual) * deal.moneyFactor
+  const depreciation = (deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment - residual) / deal.leaseTermMonths
+  const finance      = ((deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment) + residual  ) * deal.moneyFactor
   return (depreciation + finance) * (1 + deal.taxRate)
 }
 
 export function leaseTotalCost(deal) {
-  return leaseMonthlyPayment(deal) * deal.leaseTermMonths + deal.downPayment + deal.acquisitionFee
+  //return leaseMonthlyPayment(deal) * deal.leaseTermMonths + deal.downPayment + deal.acquisitionFee
+  return leaseMonthlyPayment(deal) * (deal.leaseTermMonths  - 1) + leaseDueAtSigning(deal)
+}
+
+export function leaseDueAtSigning(deal) {
+  return leaseMonthlyPayment(deal) + (deal.downPayment + deal.acquisitionFee ) * (1 + deal.taxRate) + (deal.acquisitionFee * deal.taxRate)
 }
 
 /** Convert money factor to equivalent APR */
@@ -86,6 +91,7 @@ export function purchaseSummaryRows(deal) {
     { label: 'Loan Term',        value: `${deal.loanTermMonths} mo` },
     { label: 'APR',              value: formatPercent(deal.interestRate) },
     { label: 'Tax Rate',         value: formatPercent(deal.taxRate) },
+    { label: 'Incentives',       value: formatCurrency(deal.mfrIncentives) },
     { label: 'Total Interest',   value: formatCurrency(purchaseTotalInterest(deal)) },
     { label: 'Total Cost',       value: formatCurrency(purchaseTotalCost(deal)) },
   ]
@@ -94,6 +100,7 @@ export function purchaseSummaryRows(deal) {
 export function leaseSummaryRows(deal) {
   return [
     { label: 'MSRP',               value: formatCurrency(deal.msrp) },
+    { label: 'Negotiated Price',   value: formatCurrency(deal.negotiatedPrice) },
     { label: 'Residual',           value: `${(deal.residualPercent * 100).toFixed(0)}% · ${formatCurrency(leaseResidualValue(deal))}` },
     { label: 'Money Factor',       value: `${deal.moneyFactor} (${moneyFactorToAPR(deal.moneyFactor).toFixed(2)}% APR equiv.)` },
     { label: 'Cap Cost Reduction', value: formatCurrency(deal.downPayment) },
@@ -101,6 +108,7 @@ export function leaseSummaryRows(deal) {
     { label: 'Mileage/Year',       value: `${formatNumber(deal.mileageAllowancePerYear)} mi` },
     { label: 'Lease Term',         value: `${deal.leaseTermMonths} mo` },
     { label: 'Tax Rate',           value: formatPercent(deal.taxRate) },
+    { label: 'Incentives',         value: formatCurrency(deal.mfrIncentives) },
     { label: 'Total Cost',         value: formatCurrency(leaseTotalCost(deal)) },
   ]
 }
