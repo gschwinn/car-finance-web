@@ -1,20 +1,27 @@
-// components/Purchase/PurchaseForm.jsx
 import { useState, useEffect } from 'react'
-import { FormField, SectionDivider, StatTile } from '../shared/UI.jsx'
-import { purchaseMonthlyPayment, purchaseTotalCost, purchaseTotalInterest, formatCurrency } from '../../utils/calculations.js'
-import { defaultPurchase, LOAN_TERMS } from '../../utils/defaults.js'
+import type { PurchaseDeal } from '../../types'
+import { FormField, SectionDivider, StatTile } from '../shared/UI'
+import { purchaseMonthlyPayment, purchaseTotalCost, purchaseTotalInterest, formatCurrency } from '../../utils/calculations'
+import { defaultPurchase, LOAN_TERMS } from '../../utils/defaults'
 
-export default function PurchaseForm({ initial, onSave, onCancel }) {
-  const [form, setForm] = useState(() => ({ ...defaultPurchase(), ...initial }))
+interface PurchaseFormProps {
+  initial: Partial<PurchaseDeal>
+  onSave: (data: PurchaseDeal) => void
+  onCancel: () => void
+}
+
+export default function PurchaseForm({ initial, onSave, onCancel }: PurchaseFormProps) {
+  const [form, setForm] = useState<PurchaseDeal>(() => ({ ...defaultPurchase(), ...initial }))
 
   useEffect(() => {
     setForm({ ...defaultPurchase(), ...initial })
   }, [initial])
 
-  const set = (field, value) => setForm(f => ({ ...f, [field]: value }))
-  const num = v => parseFloat(v) || 0
+  function set<K extends keyof PurchaseDeal>(field: K, value: PurchaseDeal[K]) {
+    setForm(f => ({ ...f, [field]: value }))
+  }
+  const num = (v: string): number => parseFloat(v) || 0
 
-  // Live preview
   const preview = {
     monthly:  purchaseMonthlyPayment(form),
     total:    purchaseTotalCost(form),
@@ -23,7 +30,7 @@ export default function PurchaseForm({ initial, onSave, onCancel }) {
 
   const canSave = form.carMake.trim() && form.carModel.trim() && form.negotiatedPrice > 0
 
-  function handleSubmit(e) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!canSave) return
     onSave(form)

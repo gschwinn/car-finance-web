@@ -1,15 +1,14 @@
-// components/Comparison/ComparisonGrid.jsx
 import { CheckCircle2 } from 'lucide-react'
+import type { Deal } from '../../types'
 import {
   formatCurrency, bestIndex,
   dealMonthly, dealTotal, dealTermMonths, dealDisplayName, dealSummaryRows,
-} from '../../utils/calculations.js'
-import { DealTypeBadge } from '../shared/UI.jsx'
+} from '../../utils/calculations'
+import { DealTypeBadge } from '../shared/UI'
 
-// All unique labels across selected deals in stable order
-function allLabels(deals) {
-  const seen = new Set()
-  const out  = []
+function allLabels(deals: Deal[]): string[] {
+  const seen = new Set<string>()
+  const out: string[] = []
   deals.forEach(d => {
     dealSummaryRows(d).forEach(({ label }) => {
       if (!seen.has(label)) { seen.add(label); out.push(label) }
@@ -18,40 +17,25 @@ function allLabels(deals) {
   return out
 }
 
-const KEY_ROWS = [
-  {
-    label:    'Monthly Payment',
-    getValue: d => dealMonthly(d),
-    format:   v => formatCurrency(v),
-    lower:    true,
-  },
-  {
-    label:    'Total Cost',
-    getValue: d => dealTotal(d),
-    format:   v => formatCurrency(v),
-    lower:    true,
-  },
-  {
-    label:    'Term',
-    getValue: d => dealTermMonths(d),
-    format:   v => `${v} mo`,
-    lower:    null,   // null = no winner highlight
-  },
-  {
-    label:    'Down Payment',
-    getValue: d => d.downPayment,
-    format:   v => formatCurrency(v),
-    lower:    true,
-  },
-  //{
-  //  label:    'Money Factor',
-  //  getValue: d => d.moneyFactor,
-  //  format:   v => formatPercent(v),
-  //  lower:    true,
-  //},
+interface KeyRow {
+  label:    string
+  getValue: (d: Deal) => number
+  format:   (v: number) => string
+  lower:    boolean | null
+}
+
+const KEY_ROWS: KeyRow[] = [
+  { label: 'Monthly Payment', getValue: d => dealMonthly(d),    format: v => formatCurrency(v), lower: true },
+  { label: 'Total Cost',      getValue: d => dealTotal(d),      format: v => formatCurrency(v), lower: true },
+  { label: 'Term',            getValue: d => dealTermMonths(d), format: v => `${v} mo`,         lower: null },
+  { label: 'Down Payment',    getValue: d => d.downPayment,     format: v => formatCurrency(v), lower: true },
 ]
 
-export default function ComparisonGrid({ deals }) {
+interface ComparisonGridProps {
+  deals: Deal[]
+}
+
+export default function ComparisonGrid({ deals }: ComparisonGridProps) {
   const labels = allLabels(deals)
 
   return (
@@ -60,7 +44,7 @@ export default function ComparisonGrid({ deals }) {
 
         {/* ── Column headers ── */}
         <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `140px repeat(${deals.length}, 1fr)` }}>
-          <div /> {/* empty corner */}
+          <div />
           {deals.map(deal => (
             <div key={deal.id} className="card p-3 text-center">
               <DealTypeBadge type={deal.type} />
@@ -78,8 +62,8 @@ export default function ComparisonGrid({ deals }) {
         <div className="mb-2">
           <p className="section-header px-1 mb-2">Key Metrics</p>
           {KEY_ROWS.map(({ label, getValue, format, lower }) => {
-            const values  = deals.map(getValue)
-            const winIdx  = lower !== null ? bestIndex(values, lower) : null
+            const values = deals.map(getValue)
+            const winIdx = lower !== null ? bestIndex(values, lower) : null
             return (
               <CompRow key={label} label={label} deals={deals}
                 values={values.map(format)} winnerIdx={winIdx} />
@@ -105,18 +89,24 @@ export default function ComparisonGrid({ deals }) {
   )
 }
 
-function CompRow({ label, deals, values, winnerIdx, detail = false }) {
+interface CompRowProps {
+  label:     string
+  deals:     Deal[]
+  values:    string[]
+  winnerIdx: number | null
+  detail?:   boolean
+}
+
+function CompRow({ label, deals, values, winnerIdx, detail = false }: CompRowProps) {
   return (
     <div
       className="grid gap-2 mb-1.5 items-center"
       style={{ gridTemplateColumns: `140px repeat(${deals.length}, 1fr)` }}
     >
-      {/* Label */}
       <span className={`${detail ? 'text-xs' : 'text-sm'} text-slate-400 pr-2 leading-tight`}>
         {label}
       </span>
 
-      {/* Values */}
       {values.map((value, idx) => {
         const isWinner = winnerIdx === idx
         return (

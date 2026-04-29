@@ -1,22 +1,25 @@
-// App.jsx
-import { Routes, Route, NavLink, useLocation } from 'react-router-dom'
-import { ShoppingCart, Calendar, ArrowLeftRight, Car } from 'lucide-react'
-import PurchasePage    from './pages/PurchasePage.jsx'
-import LeasePage       from './pages/LeasePage.jsx'
-import ComparisonPage  from './pages/ComparisonPage.jsx'
+import { Routes, Route, NavLink } from 'react-router-dom'
+import { ShoppingCart, Calendar, ArrowLeftRight, Car, type LucideIcon } from 'lucide-react'
+import PurchasePage   from './pages/PurchasePage'
+import LeasePage      from './pages/LeasePage'
+import ComparisonPage from './pages/ComparisonPage'
 
-const NAV = [
-  { to: '/',          label: 'Purchase', Icon: ShoppingCart },
-  { to: '/lease',     label: 'Lease',    Icon: Calendar },
-  { to: '/compare',   label: 'Compare',  Icon: ArrowLeftRight },
+interface NavItem {
+  to:    string
+  label: string
+  Icon:  LucideIcon
+}
+
+const NAV: NavItem[] = [
+  { to: '/',        label: 'Purchase', Icon: ShoppingCart },
+  { to: '/lease',   label: 'Lease',    Icon: Calendar },
+  { to: '/compare', label: 'Compare',  Icon: ArrowLeftRight },
 ]
 
 export default function App() {
-  const { pathname } = useLocation()
-
   return (
     <div className="flex flex-col min-h-screen min-h-[100dvh]">
-      {/* ── Top bar (desktop sidebar nav placeholder / mobile header) ── */}
+      {/* ── Top bar (mobile header) ── */}
       <header className="sticky top-0 z-40 bg-surface-900/80 backdrop-blur border-b border-surface-700
                          px-4 py-3 flex items-center gap-3 md:hidden">
         <Car size={20} className="text-accent" />

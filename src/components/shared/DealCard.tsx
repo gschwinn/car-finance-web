@@ -1,14 +1,21 @@
-// components/shared/DealCard.jsx
 import { Pencil, Trash2, TrendingDown, Clock } from 'lucide-react'
-import { formatCurrency, dealMonthly, dealTotal, dealTermMonths, dealDisplayName } from '../../utils/calculations.js'
-import { DealTypeBadge } from './UI.jsx'
+import type { Deal } from '../../types'
+import { formatCurrency, dealMonthly, dealTotal, dealTermMonths, dealDisplayName } from '../../utils/calculations'
+import { DealTypeBadge } from './UI'
 
-export default function DealCard({ deal, onEdit, onDelete, compact = false }) {
-  const monthly  = dealMonthly(deal)
-  const total    = dealTotal(deal)
-  const termMos  = dealTermMonths(deal)
-  const effectivePayment  = dealTotal(deal)/dealTermMonths(deal)
-  const name     = dealDisplayName(deal)
+interface DealCardProps {
+  deal: Deal
+  onEdit: (deal: Deal) => void
+  onDelete: (deal: Deal) => void
+  compact?: boolean
+}
+
+export default function DealCard({ deal, onEdit, onDelete, compact = false }: DealCardProps) {
+  const monthly         = dealMonthly(deal)
+  const total           = dealTotal(deal)
+  const termMos         = dealTermMonths(deal)
+  const effectivePayment = dealTotal(deal) / dealTermMonths(deal)
+  const name            = dealDisplayName(deal)
 
   return (
     <div className="card p-4 hover:border-surface-500 transition-colors duration-150
@@ -24,11 +31,10 @@ export default function DealCard({ deal, onEdit, onDelete, compact = false }) {
           </div>
           <h3 className="font-semibold text-slate-100 truncate">{name}</h3>
           {deal.trimLevel && (
-            <p className="text-xs text-slate-500 mt-0.5">{deal.carModel}-{ deal.trimLevel}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{deal.carModel}-{deal.trimLevel}</p>
           )}
         </div>
 
-        {/* Action buttons */}
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity
                         focus-within:opacity-100">
           <button
@@ -76,7 +82,7 @@ export default function DealCard({ deal, onEdit, onDelete, compact = false }) {
         </span>
         <span className="flex items-center gap-1">
           <Clock size={11} />
-          {new Date(deal.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          {new Date(deal.createdAt!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </span>
       </div>
     </div>

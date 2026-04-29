@@ -1,24 +1,24 @@
-// components/Export/ExportPanel.jsx
 import { useState } from 'react'
 import { Download, Copy, Check } from 'lucide-react'
+import type { Deal } from '../../types'
 import {
   formatCurrency, dealMonthly, dealTotal, dealTermMonths,
   dealDisplayName, dealSummaryRows,
-} from '../../utils/calculations.js'
-import { downloadFile } from '../../utils/storage.js'
+} from '../../utils/calculations'
+import { downloadFile } from '../../utils/storage'
 
-// ── Text builder (mirrors ExportView.swift buildTextSummary) ─────────────────
+// ── Text builder ──────────────────────────────────────────────────────────────
 
-function buildText(deals) {
+function buildText(deals: Deal[]): string {
   const divider = '─'.repeat(44)
-  const pad = (label, value) => {
+  const pad = (label: string, value: string | number) => {
     const spaces = ' '.repeat(Math.max(1, 20 - label.length))
     return `${label}${spaces}${value}`
   }
 
-  const lines = [
+  const lines: string[] = [
     'CAR DEAL COMPARISON',
-    `Generated: ${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}`,
+    `Generated: ${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' } as Intl.DateTimeFormatOptions)}`,
     divider,
   ]
 
@@ -48,24 +48,21 @@ function buildText(deals) {
 
 // ── CSV builder ───────────────────────────────────────────────────────────────
 
-function buildCSV(deals) {
-  // Collect all unique labels
-  const seen = new Set()
-  const allLabels = []
+function buildCSV(deals: Deal[]): string {
+  const seen      = new Set<string>()
+  const allLabels: string[] = []
   deals.forEach(d => {
     dealSummaryRows(d).forEach(({ label }) => {
       if (!seen.has(label)) { seen.add(label); allLabels.push(label) }
     })
   })
 
-  const esc = v => `"${String(v).replace(/"/g, '""')}"`
-  const rows = []
+  const esc  = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`
+  const rows: string[] = []
 
-  // Header
   rows.push(['Field', ...deals.map(dealDisplayName)].map(esc).join(','))
 
-  // Fixed rows
-  const fixed = [
+  const fixed: [string, (d: Deal) => string | number][] = [
     ['Deal Type',       d => d.type],
     ['Monthly Payment', d => formatCurrency(dealMonthly(d))],
     ['Total Cost',      d => formatCurrency(dealTotal(d))],
@@ -76,11 +73,8 @@ function buildCSV(deals) {
     rows.push([label, ...deals.map(fn)].map(esc).join(','))
   })
 
-  // Deal-specific rows
   allLabels.forEach(label => {
-    const values = deals.map(d => {
-      return dealSummaryRows(d).find(r => r.label === label)?.value ?? ''
-    })
+    const values = deals.map(d => dealSummaryRows(d).find(r => r.label === label)?.value ?? '')
     rows.push([label, ...values].map(esc).join(','))
   })
 
@@ -89,9 +83,13 @@ function buildCSV(deals) {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function ExportPanel({ deals }) {
-  const [format, setFormat]   = useState('text')
-  const [copied, setCopied]   = useState(false)
+interface ExportPanelProps {
+  deals: Deal[]
+}
+
+export default function ExportPanel({ deals }: ExportPanelProps) {
+  const [format, setFormat] = useState<'text' | 'csv'>('text')
+  const [copied, setCopied] = useState(false)
 
   const content = format === 'csv' ? buildCSV(deals) : buildText(deals)
 
@@ -108,7 +106,6 @@ export default function ExportPanel({ deals }) {
     downloadFile(`car-comparison.${ext}`, content, mime)
   }
 
-  // Web Share API (mobile browsers)
   const canShare = typeof navigator.share === 'function'
   function handleShare() {
     navigator.share({ title: 'Car Deal Comparison', text: content }).catch(() => {})
@@ -118,7 +115,7 @@ export default function ExportPanel({ deals }) {
     <div className="p-6 space-y-4">
       {/* Format toggle */}
       <div className="flex gap-2">
-        {['text', 'csv'].map(f => (
+        {(['text', 'csv'] as const).map(f => (
           <button key={f} type="button"
             onClick={() => setFormat(f)}
             className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-colors

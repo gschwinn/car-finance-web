@@ -1,26 +1,27 @@
-// components/shared/DealDetail.jsx
-// Full detail view shown in a modal for any deal type.
-
 import { Pencil } from 'lucide-react'
-import { StatTile, DealTypeBadge } from './UI.jsx'
+import type { Deal } from '../../types'
+import { StatTile, DealTypeBadge } from './UI'
 import {
-  formatCurrency, formatPercent, formatNumber,
+  formatCurrency,
   dealMonthly, dealTermMonths, dealTotal, dealDisplayName, dealSummaryRows,
   purchaseTotalInterest,
-  leaseResidualValue, moneyFactorToAPR,
-} from '../../utils/calculations.js'
+} from '../../utils/calculations'
 
-export default function DealDetail({ deal, onEdit }) {
-  const monthly  = dealMonthly(deal)
-  const total    = dealTotal(deal)
-  const rows     = dealSummaryRows(deal)
-  const effectivePayment  = dealTotal(deal)/dealTermMonths(deal)
-  const name     = dealDisplayName(deal)
+interface DealDetailProps {
+  deal: Deal
+  onEdit: () => void
+}
+
+export default function DealDetail({ deal, onEdit }: DealDetailProps) {
+  const monthly         = dealMonthly(deal)
+  const total           = dealTotal(deal)
+  const rows            = dealSummaryRows(deal)
+  const effectivePayment = dealTotal(deal) / dealTermMonths(deal)
+  const name            = dealDisplayName(deal)
 
   const accent3 = deal.type === 'purchase'
     ? { label: 'Total Interest', value: formatCurrency(purchaseTotalInterest(deal)), accent: 'text-warning' }
-    //: { label: 'Residual',       value: formatCurrency(leaseResidualValue(deal)),     accent: 'text-purple-400' }
-    : { label: 'Effective Pmt',       value: formatCurrency(effectivePayment),     accent: 'text-purple-400' }
+    : { label: 'Effective Pmt',  value: formatCurrency(effectivePayment),            accent: 'text-purple-400' }
 
   return (
     <div className="p-6 space-y-5">
@@ -41,9 +42,9 @@ export default function DealDetail({ deal, onEdit }) {
 
       {/* ── Key stats ── */}
       <div className="grid grid-cols-3 gap-2">
-        <StatTile label="Monthly"    value={formatCurrency(monthly)} accent="text-success" />
-        <StatTile label="Total Cost" value={formatCurrency(total)}   accent="text-accent" />
-        <StatTile label={accent3.label} value={accent3.value}        accent={accent3.accent} />
+        <StatTile label="Monthly"       value={formatCurrency(monthly)} accent="text-success" />
+        <StatTile label="Total Cost"    value={formatCurrency(total)}   accent="text-accent" />
+        <StatTile label={accent3.label} value={accent3.value}           accent={accent3.accent} />
       </div>
 
       {/* ── Detail rows ── */}
@@ -57,7 +58,7 @@ export default function DealDetail({ deal, onEdit }) {
       </div>
 
       <p className="text-xs text-slate-600 text-center">
-        Saved {new Date(deal.createdAt).toLocaleDateString('en-US', {
+        Saved {new Date(deal.createdAt!).toLocaleDateString('en-US', {
           month: 'long', day: 'numeric', year: 'numeric'
         })}
       </p>
