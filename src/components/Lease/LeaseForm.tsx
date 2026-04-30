@@ -12,9 +12,17 @@ interface LeaseFormProps {
 
 export default function LeaseForm({ initial, onSave, onCancel }: LeaseFormProps) {
   const [form, setForm] = useState<LeaseDeal>(() => ({ ...defaultLease(), ...initial }))
+  const [residualPercentInput, setResidualPercentInput] = useState<string>(() =>
+    initial.residualPercent !== undefined ? (initial.residualPercent * 100).toFixed(2) : ''
+  )
+  const [taxRateInput, setTaxRateInput] = useState<string>(() =>
+    initial.taxRate !== undefined ? (initial.taxRate * 100).toFixed(3) : ''
+  )
 
   useEffect(() => {
     setForm({ ...defaultLease(), ...initial })
+    setResidualPercentInput(initial.residualPercent !== undefined ? (initial.residualPercent * 100).toFixed(2) : '')
+    setTaxRateInput(initial.taxRate !== undefined ? (initial.taxRate * 100).toFixed(3) : '')
   }, [initial])
 
   function set<K extends keyof LeaseDeal>(field: K, value: LeaseDeal[K]) {
@@ -32,10 +40,28 @@ export default function LeaseForm({ initial, onSave, onCancel }: LeaseFormProps)
 
   const canSave = form.carMake.trim() && form.carModel.trim() && form.msrp > 0
 
+  function commitResidualPercentInput(): number {
+    const parsed = num(residualPercentInput)
+    const normalized = Math.min(100, Math.max(0, parsed))
+    set('residualPercent', normalized / 100)
+    setResidualPercentInput(normalized ? normalized.toFixed(2) : '')
+    return normalized / 100
+  }
+
+  function commitTaxRateInput(): number {
+    const parsed = num(taxRateInput)
+    const normalized = Math.min(20, Math.max(0, parsed))
+    set('taxRate', normalized / 100)
+    setTaxRateInput(normalized ? normalized.toFixed(3) : '')
+    return normalized / 100
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!canSave) return
-    onSave(form)
+    const residualPercent = commitResidualPercentInput()
+    const taxRate = commitTaxRateInput()
+    onSave({ ...form, residualPercent, taxRate })
   }
 
   return (
@@ -106,9 +132,10 @@ export default function LeaseForm({ initial, onSave, onCancel }: LeaseFormProps)
         </FormField>
         <FormField label="Residual %" hint="e.g. 55 for 55%">
           <div className="relative">
-            <input className="input pr-6" type="number" min="0" max="100" placeholder="55"
-              value={form.residualPercent ? (form.residualPercent * 100).toFixed(2) : ''}
-              onChange={e => set('residualPercent', num(e.target.value) / 100)} />
+            <input className="input pr-6" type="number" min="0" max="100" step="0.01" placeholder="55"
+              value={residualPercentInput}
+              onChange={e => setResidualPercentInput(e.target.value)}
+              onBlur={commitResidualPercentInput} />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
           </div>
         </FormField>
@@ -119,9 +146,10 @@ export default function LeaseForm({ initial, onSave, onCancel }: LeaseFormProps)
         </FormField>
         <FormField label="Tax Rate (%)" hint="e.g. 8.5 for 8.5%">
           <div className="relative">
-            <input className="input pr-6" type="number" min="0" max="20" placeholder="6.625"
-              value={form.taxRate ? (form.taxRate * 100).toFixed(3) : ''}
-              onChange={e => set('taxRate', num(e.target.value) / 100)} />
+            <input className="input pr-6" type="number" min="0" max="20" placeholder="6.625" step="0.001"
+              value={taxRateInput}
+              onChange={e => setTaxRateInput(e.target.value)}
+              onBlur={commitTaxRateInput} />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">%</span>
           </div>
         </FormField>

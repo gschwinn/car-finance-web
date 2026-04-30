@@ -79,9 +79,9 @@ export function purchaseSummaryRows(deal: PurchaseDeal): SummaryRow[] {
   return [
     { label: 'Negotiated Price', value: formatCurrency(deal.negotiatedPrice) },
     { label: 'Trade-In Value',   value: formatCurrency(deal.tradeInValue) },
-    { label: 'Down Payment',     value: formatCurrency(deal.downPayment) },
-    { label: 'Loan Term',        value: `${deal.loanTermMonths} mo` },
-    { label: 'APR',              value: formatPercent(deal.interestRate) },
+    { label: 'Down payment (Cap Cost Reduction)', value: formatCurrency(deal.downPayment) },
+    { label: 'Term',             value: `${deal.loanTermMonths} mo` },
+    { label: 'APR (Money Factor)', value: formatPercent(deal.interestRate) },
     { label: 'Tax Rate',         value: formatPercent(deal.taxRate) },
     { label: 'Incentives',       value: formatCurrency(deal.mfrIncentives) },
     { label: 'Total Interest',   value: formatCurrency(purchaseTotalInterest(deal)) },
@@ -94,11 +94,11 @@ export function leaseSummaryRows(deal: LeaseDeal): SummaryRow[] {
     { label: 'MSRP',               value: formatCurrency(deal.msrp) },
     { label: 'Negotiated Price',   value: formatCurrency(deal.negotiatedPrice) },
     { label: 'Residual',           value: `${(deal.residualPercent * 100).toFixed(0)}% · ${formatCurrency(leaseResidualValue(deal))}` },
-    { label: 'Money Factor',       value: `${deal.moneyFactor} (${moneyFactorToAPR(deal.moneyFactor).toFixed(2)}% APR equiv.)` },
-    { label: 'Cap Cost Reduction', value: formatCurrency(deal.downPayment) },
+    { label: 'APR (Money Factor)', value: `${deal.moneyFactor} (${moneyFactorToAPR(deal.moneyFactor).toFixed(2)}% APR equiv.)` },
+    { label: 'Down payment (Cap Cost Reduction)', value: formatCurrency(deal.downPayment) },
     { label: 'Acquisition Fee',    value: formatCurrency(deal.acquisitionFee) },
     { label: 'Mileage/Year',       value: `${formatNumber(deal.mileageAllowancePerYear)} mi` },
-    { label: 'Lease Term',         value: `${deal.leaseTermMonths} mo` },
+    { label: 'Term',               value: `${deal.leaseTermMonths} mo` },
     { label: 'Tax Rate',           value: formatPercent(deal.taxRate) },
     { label: 'Incentives',         value: formatCurrency(deal.mfrIncentives) },
     { label: 'Total Cost',         value: formatCurrency(leaseTotalCost(deal)) },
@@ -111,6 +111,10 @@ export function dealMonthly(deal: Deal): number {
 
 export function dealTotal(deal: Deal): number {
   return deal.type === 'purchase' ? purchaseTotalCost(deal) : leaseTotalCost(deal)
+}
+
+export function dealEffectiveMonthly(deal: Deal): number {
+  return dealTotal(deal) / dealTermMonths(deal)
 }
 
 export function dealSummaryRows(deal: Deal): SummaryRow[] {

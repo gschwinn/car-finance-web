@@ -2,7 +2,7 @@ import { CheckCircle2 } from 'lucide-react'
 import type { Deal } from '../../types'
 import {
   formatCurrency, bestIndex,
-  dealMonthly, dealTotal, dealTermMonths, dealDisplayName, dealSummaryRows,
+  dealMonthly, dealTotal, dealEffectiveMonthly, dealTermMonths, dealDisplayName, dealSummaryRows,
 } from '../../utils/calculations'
 import { DealTypeBadge } from '../shared/UI'
 
@@ -26,6 +26,7 @@ interface KeyRow {
 
 const KEY_ROWS: KeyRow[] = [
   { label: 'Monthly Payment', getValue: d => dealMonthly(d),    format: v => formatCurrency(v), lower: true },
+  { label: 'Effective Monthly', getValue: d => dealEffectiveMonthly(d), format: v => formatCurrency(v), lower: true },
   { label: 'Total Cost',      getValue: d => dealTotal(d),      format: v => formatCurrency(v), lower: true },
   { label: 'Term',            getValue: d => dealTermMonths(d), format: v => `${v} mo`,         lower: null },
   { label: 'Down Payment',    getValue: d => d.downPayment,     format: v => formatCurrency(v), lower: true },
