@@ -1,33 +1,35 @@
-// pages/PurchasePage.jsx
 import { useState } from 'react'
 import { Plus, ShoppingCart } from 'lucide-react'
-import { useDeals } from '../context/DealsContext.jsx'
-import DealCard       from '../components/shared/DealCard.jsx'
-import DealDetail     from '../components/shared/DealDetail.jsx'
-import PurchaseForm   from '../components/Purchase/PurchaseForm.jsx'
-import { Modal, ConfirmDialog, EmptyState, PageHeader } from '../components/shared/UI.jsx'
+import type { PurchaseDeal } from '../types'
+import { useDeals } from '../context/DealsContext'
+import DealCard     from '../components/shared/DealCard'
+import DealDetail   from '../components/shared/DealDetail'
+import PurchaseForm from '../components/Purchase/PurchaseForm'
+import { Modal, ConfirmDialog, EmptyState, PageHeader } from '../components/shared/UI'
+
+type ModalType = 'new' | 'edit' | 'detail' | null
+
+interface ModalState {
+  type: ModalType
+  deal: PurchaseDeal | null
+}
 
 export default function PurchasePage() {
   const { purchases, addPurchase, updatePurchase, deletePurchase } = useDeals()
 
-  const [modalState, setModalState] = useState({ type: null, deal: null })
-  // type: 'new' | 'edit' | 'detail' | null
-  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [modalState, setModalState]   = useState<ModalState>({ type: null, deal: null })
+  const [confirmDelete, setConfirmDelete] = useState<PurchaseDeal | null>(null)
 
   const close = () => setModalState({ type: null, deal: null })
 
-  function handleSave(data) {
+  function handleSave(data: PurchaseDeal) {
     if (modalState.type === 'new') addPurchase(data)
     else updatePurchase(data)
     close()
   }
 
-  function handleDelete(deal) {
-    setConfirmDelete(deal)
-  }
-
   function confirmDeleteDeal() {
-    if (confirmDelete) deletePurchase(confirmDelete.id)
+    if (confirmDelete) deletePurchase(confirmDelete.id!)
     setConfirmDelete(null)
   }
 
@@ -37,10 +39,7 @@ export default function PurchasePage() {
         title="Purchase Deals"
         subtitle={purchases.length > 0 ? `${purchases.length} saved deal${purchases.length !== 1 ? 's' : ''}` : null}
         action={
-          <button
-            onClick={() => setModalState({ type: 'new', deal: null })}
-            className="btn-primary"
-          >
+          <button onClick={() => setModalState({ type: 'new', deal: null })} className="btn-primary">
             <Plus size={16} /> New Deal
           </button>
         }
@@ -52,10 +51,7 @@ export default function PurchasePage() {
           title="No purchase deals yet"
           description="Save different configurations to compare offers from multiple dealers."
           action={
-            <button
-              onClick={() => setModalState({ type: 'new', deal: null })}
-              className="btn-primary"
-            >
+            <button onClick={() => setModalState({ type: 'new', deal: null })} className="btn-primary">
               <Plus size={16} /> Add First Deal
             </button>
           }
@@ -63,15 +59,11 @@ export default function PurchasePage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {purchases.map(deal => (
-            <div
-              key={deal.id}
-              onClick={() => setModalState({ type: 'detail', deal })}
-              className="cursor-pointer"
-            >
+            <div key={deal.id} onClick={() => setModalState({ type: 'detail', deal })} className="cursor-pointer">
               <DealCard
                 deal={deal}
-                onEdit={d => { setModalState({ type: 'edit', deal: d }) }}
-                onDelete={handleDelete}
+                onEdit={d => setModalState({ type: 'edit', deal: d as PurchaseDeal })}
+                onDelete={d => setConfirmDelete(d as PurchaseDeal)}
               />
             </div>
           ))}
@@ -86,19 +78,14 @@ export default function PurchasePage() {
         size="md"
       >
         <PurchaseForm
-          initial={modalState.deal || {}}
+          initial={modalState.deal ?? {}}
           onSave={handleSave}
           onCancel={close}
         />
       </Modal>
 
       {/* ── Detail modal ── */}
-      <Modal
-        isOpen={modalState.type === 'detail'}
-        onClose={close}
-        title="Deal Detail"
-        size="md"
-      >
+      <Modal isOpen={modalState.type === 'detail'} onClose={close} title="Deal Detail" size="md">
         {modalState.deal && (
           <DealDetail
             deal={modalState.deal}

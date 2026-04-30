@@ -1,14 +1,20 @@
-// components/Comparison/ComparisonPicker.jsx
 import { CheckCircle2, Circle, ShoppingCart, Calendar } from 'lucide-react'
-import { formatCurrency, dealMonthly, dealTermMonths, dealDisplayName } from '../../utils/calculations.js'
-import { useDeals } from '../../context/DealsContext.jsx'
+import type { Deal } from '../../types'
+import { formatCurrency, dealMonthly, dealTermMonths, dealDisplayName } from '../../utils/calculations'
+import { useDeals } from '../../context/DealsContext'
 
 const MAX = 3
 
-export default function ComparisonPicker({ selected, onChange, onClose }) {
+interface ComparisonPickerProps {
+  selected: Deal[]
+  onChange: (deals: Deal[]) => void
+  onClose:  () => void
+}
+
+export default function ComparisonPicker({ selected, onChange, onClose }: ComparisonPickerProps) {
   const { purchases, leases } = useDeals()
 
-  function toggle(deal) {
+  function toggle(deal: Deal) {
     const isSelected = selected.some(d => d.id === deal.id)
     if (isSelected) {
       onChange(selected.filter(d => d.id !== deal.id))
@@ -77,7 +83,6 @@ export default function ComparisonPicker({ selected, onChange, onClose }) {
         </>
       )}
 
-      {/* Footer */}
       <div className="flex gap-3 pt-2 border-t border-surface-700">
         <button
           onClick={() => onChange([])}
@@ -94,7 +99,14 @@ export default function ComparisonPicker({ selected, onChange, onClose }) {
   )
 }
 
-function PickerRow({ deal, isSelected, disabled, onToggle }) {
+interface PickerRowProps {
+  deal:       Deal
+  isSelected: boolean
+  disabled:   boolean
+  onToggle:   (deal: Deal) => void
+}
+
+function PickerRow({ deal, isSelected, disabled, onToggle }: PickerRowProps) {
   return (
     <button
       type="button"
@@ -110,7 +122,7 @@ function PickerRow({ deal, isSelected, disabled, onToggle }) {
     >
       {isSelected
         ? <CheckCircle2 size={18} className="text-accent shrink-0" />
-        : <Circle size={18} className="text-slate-500 shrink-0" />
+        : <Circle      size={18} className="text-slate-500 shrink-0" />
       }
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-slate-200 truncate">{dealDisplayName(deal)}</p>

@@ -1,13 +1,8 @@
-// utils/calculations.js
-// Mirrors the computed properties from PurchaseDeal.swift and LeaseDeal.swift
+import type { PurchaseDeal, LeaseDeal, Deal, SummaryRow } from '../types'
 
 // ── Purchase ──────────────────────────────────────────────────────────────────
 
-/**
- * Standard amortization formula.
- * interestRate is stored as a decimal (e.g. 0.049 for 4.9%)
- */
-export function purchaseMonthlyPayment(deal) {
+export function purchaseMonthlyPayment(deal: PurchaseDeal): number {
   const { negotiatedPrice, downPayment, tradeInValue, loanTermMonths, interestRate, taxRate } = deal
   const principal  = negotiatedPrice - downPayment - tradeInValue
   const taxedPrice = principal * (1 + taxRate)
@@ -17,44 +12,42 @@ export function purchaseMonthlyPayment(deal) {
   return taxedPrice * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1)
 }
 
-export function purchaseTotalCost(deal) {
+export function purchaseTotalCost(deal: PurchaseDeal): number {
   return purchaseMonthlyPayment(deal) * deal.loanTermMonths + deal.downPayment
 }
 
-export function purchaseTotalInterest(deal) {
+export function purchaseTotalInterest(deal: PurchaseDeal): number {
   return purchaseTotalCost(deal) - deal.negotiatedPrice - deal.downPayment
 }
 
 // ── Lease ─────────────────────────────────────────────────────────────────────
 
-export function leaseResidualValue(deal) {
+export function leaseResidualValue(deal: LeaseDeal): number {
   return deal.msrp * deal.residualPercent
 }
 
-export function leaseMonthlyPayment(deal) {
-  const residual    = leaseResidualValue(deal)
+export function leaseMonthlyPayment(deal: LeaseDeal): number {
+  const residual     = leaseResidualValue(deal)
   const depreciation = (deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment - residual) / deal.leaseTermMonths
-  const finance      = ((deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment) + residual  ) * deal.moneyFactor
+  const finance      = ((deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment) + residual) * deal.moneyFactor
   return (depreciation + finance) * (1 + deal.taxRate)
 }
 
-export function leaseTotalCost(deal) {
-  //return leaseMonthlyPayment(deal) * deal.leaseTermMonths + deal.downPayment + deal.acquisitionFee
-  return leaseMonthlyPayment(deal) * (deal.leaseTermMonths  - 1) + leaseDueAtSigning(deal)
+export function leaseTotalCost(deal: LeaseDeal): number {
+  return leaseMonthlyPayment(deal) * (deal.leaseTermMonths - 1) + leaseDueAtSigning(deal)
 }
 
-export function leaseDueAtSigning(deal) {
-  return leaseMonthlyPayment(deal) + (deal.downPayment + deal.acquisitionFee ) * (1 + deal.taxRate) + (deal.acquisitionFee * deal.taxRate)
+export function leaseDueAtSigning(deal: LeaseDeal): number {
+  return leaseMonthlyPayment(deal) + (deal.downPayment + deal.acquisitionFee) * (1 + deal.taxRate) + (deal.acquisitionFee * deal.taxRate)
 }
 
-/** Convert money factor to equivalent APR */
-export function moneyFactorToAPR(moneyFactor) {
+export function moneyFactorToAPR(moneyFactor: number): number {
   return moneyFactor * 2400
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-export function formatCurrency(value, decimals = 0) {
+export function formatCurrency(value: number, decimals = 0): string {
   return new Intl.NumberFormat('en-US', {
     style:                 'currency',
     currency:              'USD',
@@ -63,16 +56,15 @@ export function formatCurrency(value, decimals = 0) {
   }).format(value)
 }
 
-export function formatPercent(value, decimals = 2) {
+export function formatPercent(value: number, decimals = 2): string {
   return `${(value * 100).toFixed(decimals)}%`
 }
 
-export function formatNumber(value) {
+export function formatNumber(value: number): string {
   return new Intl.NumberFormat('en-US').format(value)
 }
 
-/** Returns the index of the min value in an array; null if all equal */
-export function bestIndex(values, lower = true) {
+export function bestIndex(values: number[], lower = true): number | null {
   if (values.length <= 1) return null
   const unique = new Set(values)
   if (unique.size === 1) return null
@@ -81,9 +73,9 @@ export function bestIndex(values, lower = true) {
     : values.indexOf(Math.max(...values))
 }
 
-// ── Summary rows (mirrors CarDealComparable.summaryRows) ─────────────────────
+// ── Summary rows ──────────────────────────────────────────────────────────────
 
-export function purchaseSummaryRows(deal) {
+export function purchaseSummaryRows(deal: PurchaseDeal): SummaryRow[] {
   return [
     { label: 'Negotiated Price', value: formatCurrency(deal.negotiatedPrice) },
     { label: 'Trade-In Value',   value: formatCurrency(deal.tradeInValue) },
@@ -97,7 +89,7 @@ export function purchaseSummaryRows(deal) {
   ]
 }
 
-export function leaseSummaryRows(deal) {
+export function leaseSummaryRows(deal: LeaseDeal): SummaryRow[] {
   return [
     { label: 'MSRP',               value: formatCurrency(deal.msrp) },
     { label: 'Negotiated Price',   value: formatCurrency(deal.negotiatedPrice) },
@@ -113,25 +105,22 @@ export function leaseSummaryRows(deal) {
   ]
 }
 
-/** Unified monthly/total for any deal */
-export function dealMonthly(deal) {
+export function dealMonthly(deal: Deal): number {
   return deal.type === 'purchase' ? purchaseMonthlyPayment(deal) : leaseMonthlyPayment(deal)
 }
 
-export function dealTotal(deal) {
+export function dealTotal(deal: Deal): number {
   return deal.type === 'purchase' ? purchaseTotalCost(deal) : leaseTotalCost(deal)
 }
 
-export function dealSummaryRows(deal) {
+export function dealSummaryRows(deal: Deal): SummaryRow[] {
   return deal.type === 'purchase' ? purchaseSummaryRows(deal) : leaseSummaryRows(deal)
 }
 
-export function dealTermMonths(deal) {
+export function dealTermMonths(deal: Deal): number {
   return deal.type === 'purchase' ? deal.loanTermMonths : deal.leaseTermMonths
 }
 
-export function dealDisplayName(deal) {
-  const base = deal.name?.trim()
-    || `${deal.carYear} ${deal.carMake} ${deal.carModel}`
-  return base
+export function dealDisplayName(deal: Deal): string {
+  return deal.name?.trim() || `${deal.carYear} ${deal.carMake} ${deal.carModel}`
 }

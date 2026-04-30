@@ -1,30 +1,38 @@
-// components/Lease/LeaseForm.jsx
 import { useState, useEffect } from 'react'
-import { FormField, SectionDivider, StatTile } from '../shared/UI.jsx'
-import { leaseMonthlyPayment, leaseTotalCost,leaseDueAtSigning,  leaseResidualValue, moneyFactorToAPR, formatCurrency } from '../../utils/calculations.js'
-import { defaultLease, LEASE_TERMS, MILEAGE_OPTS } from '../../utils/defaults.js'
+import type { LeaseDeal } from '../../types'
+import { FormField, SectionDivider, StatTile } from '../shared/UI'
+import { leaseMonthlyPayment, leaseTotalCost, leaseDueAtSigning, leaseResidualValue, moneyFactorToAPR, formatCurrency } from '../../utils/calculations'
+import { defaultLease, LEASE_TERMS, MILEAGE_OPTS } from '../../utils/defaults'
 
-export default function LeaseForm({ initial, onSave, onCancel }) {
-  const [form, setForm] = useState(() => ({ ...defaultLease(), ...initial }))
+interface LeaseFormProps {
+  initial: Partial<LeaseDeal>
+  onSave: (data: LeaseDeal) => void
+  onCancel: () => void
+}
+
+export default function LeaseForm({ initial, onSave, onCancel }: LeaseFormProps) {
+  const [form, setForm] = useState<LeaseDeal>(() => ({ ...defaultLease(), ...initial }))
 
   useEffect(() => {
     setForm({ ...defaultLease(), ...initial })
   }, [initial])
 
-  const set = (field, value) => setForm(f => ({ ...f, [field]: value }))
-  const num = v => parseFloat(v) || 0
+  function set<K extends keyof LeaseDeal>(field: K, value: LeaseDeal[K]) {
+    setForm(f => ({ ...f, [field]: value }))
+  }
+  const num = (v: string): number => parseFloat(v) || 0
 
   const preview = form.msrp > 0 ? {
-    monthly:   leaseMonthlyPayment(form),
-    total:     leaseTotalCost(form),
-    dueAtSigning:     leaseDueAtSigning(form),
-    residual:  leaseResidualValue(form),
-    equivAPR:  moneyFactorToAPR(form.moneyFactor),
+    monthly:      leaseMonthlyPayment(form),
+    total:        leaseTotalCost(form),
+    dueAtSigning: leaseDueAtSigning(form),
+    residual:     leaseResidualValue(form),
+    equivAPR:     moneyFactorToAPR(form.moneyFactor),
   } : null
 
   const canSave = form.carMake.trim() && form.carModel.trim() && form.msrp > 0
 
-  function handleSubmit(e) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!canSave) return
     onSave(form)
@@ -36,9 +44,9 @@ export default function LeaseForm({ initial, onSave, onCancel }) {
       {/* ── Preview banner ── */}
       {preview && (
         <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-surface-700/40 border border-surface-600/40">
-          <StatTile label="Monthly"  value={formatCurrency(preview.monthly)}  accent="text-success" />
-          <StatTile label="Due as Signing" value={formatCurrency(preview.dueAtSigning)} accent="text-accent" />
-          <StatTile label="Equiv APR" value={`${preview.equivAPR.toFixed(2)}%`} accent="text-warning" />
+          <StatTile label="Monthly"        value={formatCurrency(preview.monthly)}       accent="text-success" />
+          <StatTile label="Due at Signing" value={formatCurrency(preview.dueAtSigning)}  accent="text-accent" />
+          <StatTile label="Equiv APR"      value={`${preview.equivAPR.toFixed(2)}%`}     accent="text-warning" />
         </div>
       )}
 
