@@ -1,6 +1,6 @@
 import { Pencil, Trash2, TrendingDown, Clock } from 'lucide-react'
 import type { Deal } from '../../types'
-import { formatCurrency, dealMonthly, dealTotal, dealTermMonths, dealDisplayName } from '../../utils/calculations'
+import { formatCurrency, dealMonthly, dealTotal, dealEffectiveMonthly, dealTermMonths, dealDisplayName } from '../../utils/calculations'
 import { DealTypeBadge } from './UI'
 
 interface DealCardProps {
@@ -14,7 +14,7 @@ export default function DealCard({ deal, onEdit, onDelete, compact = false }: De
   const monthly         = dealMonthly(deal)
   const total           = dealTotal(deal)
   const termMos         = dealTermMonths(deal)
-  const effectivePayment = dealTotal(deal) / dealTermMonths(deal)
+  const effectivePayment = dealEffectiveMonthly(deal)
   const name            = dealDisplayName(deal)
 
   return (
