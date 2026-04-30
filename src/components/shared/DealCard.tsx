@@ -1,6 +1,21 @@
+import type { Deal } from '@/types'
+
+import { formatCurrency, dealMonthly, dealEffectiveMonthly, dealTotal, dealTermMonths, dealDisplayName } from '@/utils/calculations'
+
 import { Pencil, Trash2, TrendingDown, Clock } from 'lucide-react'
-import type { Deal } from '../../types'
-import { formatCurrency, dealMonthly, dealTotal, dealEffectiveMonthly, dealTermMonths, dealDisplayName } from '../../utils/calculations'
+
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import Typography from '@mui/material/Typography';
+import Button from "@mui/material/Button";
+import IconButton from '@mui/material/IconButton';
+
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+
 import { DealTypeBadge } from './UI'
 
 interface DealCardProps {
@@ -18,8 +33,34 @@ export default function DealCard({ deal, onEdit, onDelete, compact = false }: De
   const name            = dealDisplayName(deal)
 
   return (
-    <div className="card p-4 hover:border-surface-500 transition-colors duration-150
-                    group animate-fade-in">
+    <Card variant="outlined" sx={{ backgroundColor: (th) => th.palette.background.paper }}>
+      <CardHeader
+        title={
+          <Box>
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
+              <DealTypeBadge type={deal.type} />
+              {deal.carYear && (
+                <Typography component="span" variant="body2">{deal.carYear}</Typography>
+              )}
+            </Box>
+            <Typography variant="h4">{name}</Typography>
+            {deal.trimLevel && (
+              <Typography component="p" variant="body2">{deal.carModel}-{deal.trimLevel}</Typography>
+            )}
+          </Box>
+        }
+        action={
+          <Box>
+            <IconButton onClick={() => onEdit(deal)}>
+              <EditIcon />
+            </IconButton>
+            <IconButton onClick={() => onDelete(deal)}>
+              <DeleteIcon />
+            </IconButton>
+          </Box>
+        }
+      ></CardHeader>
+
       {/* ── Top row ── */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="min-w-0 flex-1">
@@ -85,6 +126,7 @@ export default function DealCard({ deal, onEdit, onDelete, compact = false }: De
           {new Date(deal.createdAt!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </span>
       </div>
-    </div>
+
+    </Card>
   )
 }

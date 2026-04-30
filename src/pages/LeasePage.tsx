@@ -1,11 +1,21 @@
+import type { LeaseDeal } from '@/types'
+
 import { useState } from 'react'
-import { Plus, Calendar } from 'lucide-react'
-import type { LeaseDeal } from '../types'
-import { useDeals } from '../context/DealsContext'
-import DealCard   from '../components/shared/DealCard'
-import DealDetail from '../components/shared/DealDetail'
-import LeaseForm  from '../components/Lease/LeaseForm'
-import { Modal, ConfirmDialog, EmptyState, PageHeader } from '../components/shared/UI'
+
+
+import Button from "@mui/material/Button";
+import AddIcon from "@mui/icons-material/Add";
+
+import { useDeals } from '@/context/DealsContext'
+import DealCard   from '@/components/shared/DealCard'
+import DealDetail from '@/components/shared/DealDetail'
+import LeaseForm  from '@/components/Lease/LeaseForm'
+import { Modal, ConfirmDialog } from '@/components/shared/UI'
+
+import { Layout } from '@/components/layout/layout'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyCard } from "@/components/shared/EmptyCard";
+import { NavItems } from "@/components/layout/nav";
 
 type ModalType = 'new' | 'edit' | 'detail' | null
 
@@ -34,26 +44,36 @@ export default function LeasePage() {
   }
 
   return (
-    <>
+    <Layout>
       <PageHeader
         title="Lease Deals"
         subtitle={leases.length > 0 ? `${leases.length} saved deal${leases.length !== 1 ? 's' : ''}` : null}
         action={
-          <button onClick={() => setModalState({ type: 'new', deal: null })} className="btn-primary">
-            <Plus size={16} /> New Deal
-          </button>
+          <Button
+            size="small"
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setModalState({ type: "new", deal: null })}
+          >
+            New Deal
+          </Button>
         }
       />
 
       {leases.length === 0 ? (
-        <EmptyState
-          icon={Calendar}
+        <EmptyCard
+          Icon={NavItems[1].Icon}
           title="No lease deals yet"
           description="Compare offers from different dealers, with different money factors, residuals, and mileage tiers."
           action={
-            <button onClick={() => setModalState({ type: 'new', deal: null })} className="btn-primary">
-              <Plus size={16} /> Add First Deal
-            </button>
+            <Button
+              size="small"
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setModalState({ type: "new", deal: null })}
+            >
+              Add First Deal
+            </Button>
           }
         />
       ) : (
@@ -103,6 +123,6 @@ export default function LeasePage() {
         onConfirm={confirmDeleteDeal}
         onCancel={() => setConfirmDelete(null)}
       />
-    </>
+    </Layout>
   )
 }

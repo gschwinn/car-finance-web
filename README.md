@@ -11,7 +11,6 @@ All data is stored locally in `localStorage` — no backend, no account required
 | Build tool  | Vite 5                        |
 | Styling     | Tailwind CSS 3                |
 | State/data  | React Context + localStorage  |
-| PWA         | vite-plugin-pwa + Workbox     |
 | Icons       | lucide-react                  |
 
 ## Getting Started

@@ -1,16 +1,18 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import { DealsProvider } from './context/DealsContext'
+
 import App from './App'
+import { UserProvider } from '@/context/UserContext'
+import { ThemeProvider } from '@/theme.tsx';
+
 import './index.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <DealsProvider>
+    <ThemeProvider>
+      <UserProvider>
         <App />
-      </DealsProvider>
-    </BrowserRouter>
+      </UserProvider>
+    </ThemeProvider>
   </StrictMode>
 )

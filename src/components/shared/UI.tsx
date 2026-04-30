@@ -163,23 +163,3 @@ export function DealTypeBadge({ type }: { type: 'purchase' | 'lease' }) {
     </span>
   )
 }
-
-// ── PageHeader ────────────────────────────────────────────────────────────────
-
-interface PageHeaderProps {
-  title: string
-  subtitle?: string | null
-  action?: ReactNode
-}
-
-export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
-  return (
-    <div className="flex items-start justify-between mb-6">
-      <div>
-        <h1 className="font-display text-2xl md:text-3xl text-slate-100">{title}</h1>
-        {subtitle && <p className="text-sm text-slate-500 mt-0.5">{subtitle}</p>}
-      </div>
-      {action && <div className="ml-4 shrink-0">{action}</div>}
-    </div>
-  )
-}

@@ -5,8 +5,11 @@ import { useDeals } from '../context/DealsContext'
 import ComparisonPicker from '../components/Comparison/ComparisonPicker'
 import ComparisonGrid   from '../components/Comparison/ComparisonGrid'
 import ExportPanel      from '../components/Export/ExportPanel'
-import { Modal, EmptyState, PageHeader } from '../components/shared/UI'
+import { Modal, EmptyState } from '../components/shared/UI'
 import { dealDisplayName } from '../utils/calculations'
+
+import { Layout } from '@/components/layout/layout'
+import { PageHeader } from '@/components/layout/page-header'
 
 export default function ComparisonPage() {
   const { allDeals } = useDeals()
@@ -22,7 +25,7 @@ export default function ComparisonPage() {
     .map(s => allDeals.find(d => d.id === s.id)!)
 
   return (
-    <>
+    <Layout>
       <PageHeader
         title="Compare Deals"
         subtitle={
@@ -84,6 +87,6 @@ export default function ComparisonPage() {
       <Modal isOpen={showExport} onClose={() => setShowExport(false)} title="Export Comparison" size="md">
         <ExportPanel deals={validSelected} />
       </Modal>
-    </>
+    </Layout>
   )
 }
