@@ -14,8 +14,9 @@ import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import CardHeader from "@mui/material/CardHeader";
 import CardActions from "@mui/material/CardActions";
-import Typography from "@mui/material/Typography";
+import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
@@ -28,15 +29,9 @@ interface DealCardProps {
   deal: Deal;
   onEdit: (deal: Deal) => void;
   onDelete: (deal: Deal) => void;
-  compact?: boolean;
 }
 
-export default function DealCard({
-  deal,
-  onEdit,
-  onDelete,
-  compact = false,
-}: DealCardProps) {
+export default function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
   const monthly = dealMonthly(deal);
   const total = dealTotal(deal);
   const termMos = dealTermMonths(deal);
@@ -49,6 +44,7 @@ export default function DealCard({
       sx={{ backgroundColor: (th) => th.palette.background.paper }}
     >
       <CardHeader
+        sx={{ pb: 0 }}
         title={
           <Box>
             <Box
@@ -65,7 +61,7 @@ export default function DealCard({
                 </Typography>
               )}
             </Box>
-            <Typography variant="h4">{name}</Typography>
+            <Typography variant="h6">{name}</Typography>
             {deal.trimLevel && (
               <Typography component="p" color="textDisabled" variant="body2">
                 {deal.carModel}-{deal.trimLevel}
@@ -74,7 +70,7 @@ export default function DealCard({
           </Box>
         }
         action={
-          <Box sx={{ color: 'text.disabled'}}>
+          <Box sx={{ color: "text.disabled" }}>
             <IconButton
               color="inherit"
               onClick={() => onEdit(deal)}
@@ -84,7 +80,7 @@ export default function DealCard({
                 },
               })}
             >
-              <EditOutlinedIcon sx={{ fontSize: '20px' }} />
+              <EditOutlinedIcon sx={{ fontSize: "20px" }} />
             </IconButton>
             <IconButton
               color="inherit"
@@ -95,39 +91,18 @@ export default function DealCard({
                 },
               })}
             >
-              <DeleteForeverOutlinedIcon sx={{ fontSize: '20px' }} />
+              <DeleteForeverOutlinedIcon sx={{ fontSize: "20px" }} />
             </IconButton>
           </Box>
         }
       ></CardHeader>
 
-      <CardContent sx={{ p: 2 }}>
-        <div
-          className={`grid gap-2 ${compact ? "grid-cols-2" : "grid-cols-3"}`}
-        >
-          <div className="stat-tile">
-            <span className="text-xs text-slate-500 mb-0.5">Monthly</span>
-            <span className="font-mono font-semibold text-success">
-              {formatCurrency(monthly)}
-            </span>
-          </div>
-          {!compact && (
-            <div className="stat-tile">
-              <span className="text-xs text-slate-500 mb-0.5">Total</span>
-              <span className="font-mono font-semibold text-slate-200">
-                {formatCurrency(total)}
-              </span>
-            </div>
-          )}
-          {!compact && (
-            <div className="stat-tile">
-              <span className="text-xs text-slate-500 mb-0.5">Effective</span>
-              <span className="font-mono font-semibold text-slate-200">
-                {formatCurrency(effectivePayment)}
-              </span>
-            </div>
-          )}
-        </div>
+      <CardContent sx={{ pb: 0 }}>
+        <Grid container spacing={1}>
+          <StatTile title="Monthly" val={formatCurrency(monthly)} color="success" />
+          <StatTile title="Total" val={formatCurrency(total)} />
+          <StatTile title="Effective" val={formatCurrency(effectivePayment)} />
+        </Grid>
       </CardContent>
 
       <CardActions>
@@ -142,19 +117,31 @@ export default function DealCard({
           })}
         >
           <Box>
-            <TrendingDownOutlinedIcon sx={{ fontSize: '12px' }} />{" "}
-            {formatCurrency(deal.downPayment)} down for {termMos} months
+            <TrendingDownOutlinedIcon sx={{ fontSize: "12px" }} />{" "}
+            <Typography component="span" color="textDisabled" variant="body2">
+              {formatCurrency(deal.downPayment)} down for {termMos} months
+            </Typography>
           </Box>
           <Box>
-            <AccessTimeOutlinedIcon sx={{ fontSize: '12px' }} />{" "}
-            {new Date(deal.createdAt!).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-            })}
+            <AccessTimeOutlinedIcon sx={{ fontSize: "12px" }} />{" "}
+            <Typography component="span" color="textDisabled" variant="body2">
+              {new Date(deal.createdAt!).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })}
+            </Typography>
           </Box>
         </Box>
       </CardActions>
-
     </Card>
+  );
+}
+
+const StatTile = ({ title, val, color = 'textDefault' }: { title: string, val: string, color?: string }) => {
+  return (
+    <Grid size={4} className="stat-tile">
+      <Typography component="span" color="textDisabled" variant="body2">{title}</Typography>
+      <Typography component="span" color={color} variant="body2">{val}</Typography>
+    </Grid>
   );
 }

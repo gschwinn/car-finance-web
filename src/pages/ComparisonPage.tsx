@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
+import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 
 import { useDeals } from '@/context/DealsContext'
 import { Layout } from '@/components/layout/layout'
@@ -45,7 +46,7 @@ export default function ComparisonPage() {
             {validSelected.length >= 2 && (
               <Button
                 variant="contained"
-                startIcon={<Share2 />}
+                startIcon={<ShareOutlinedIcon />}
                 onClick={() => setShowExport(true)} 
               >
                 Export
