@@ -19,7 +19,7 @@ export const createRouter = () => {
       path: "/compare",
       element: <ComparisonPage />,
     },
-  ]);
+  ], { basename: import.meta.env.BASE_URL });
 
   return router;
 }
