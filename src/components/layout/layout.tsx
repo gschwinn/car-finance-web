@@ -21,14 +21,14 @@ export const Layout = ({ children }: { children: ReactNode }) => {
       <Box sx={{ flexGrow: 1, display: "flex", flexDirection: "row" }}>
         <Box
           component="aside"
-          sx={{
+          sx={(th) => ({
             display: { xs: "none", md: "block" },
             width: "14rem",
-            backgroundColor: (th) => th.palette.background.paper,
+            backgroundColor: th.palette.background.paper,
             borderColor: "#1e293b",
             borderRightWidth: "1px",
             borderStyle: "solid",
-          }}
+          })}
         >
           <Navigation />
         </Box>

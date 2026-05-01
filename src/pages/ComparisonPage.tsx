@@ -1,15 +1,22 @@
+import type { Deal } from '@/types'
 import { useState } from 'react'
-import { SlidersHorizontal, ArrowLeftRight, Share2 } from 'lucide-react'
-import type { Deal } from '../types'
-import { useDeals } from '../context/DealsContext'
-import ComparisonPicker from '../components/Comparison/ComparisonPicker'
-import ComparisonGrid   from '../components/Comparison/ComparisonGrid'
-import ExportPanel      from '../components/Export/ExportPanel'
-import { Modal, EmptyState } from '../components/shared/UI'
-import { dealDisplayName } from '../utils/calculations'
 
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
+
+import { useDeals } from '@/context/DealsContext'
 import { Layout } from '@/components/layout/layout'
 import { PageHeader } from '@/components/layout/page-header'
+import ComparisonPicker from '@/components/Comparison/ComparisonPicker'
+import ComparisonGrid   from '@/components/Comparison/ComparisonGrid'
+import ExportPanel      from '@/components/Export/ExportPanel'
+
+import { Modal } from '@/components/shared/UI'
+import { dealDisplayName } from '@/utils/calculations'
+
+import { EmptyCard } from "@/components/shared/EmptyCard";
+import { NavItems } from "@/components/layout/nav";
 
 export default function ComparisonPage() {
   const { allDeals } = useDeals()
@@ -34,30 +41,37 @@ export default function ComparisonPage() {
             : 'Select deals to compare side by side'
         }
         action={
-          <div className="flex gap-2">
+          <Box sx={{ display: 'flex', flexDirection: 'row' }}>
             {validSelected.length >= 2 && (
-              <button onClick={() => setShowExport(true)} className="btn-secondary gap-2">
-                <Share2 size={15} /> Export
-              </button>
+              <Button
+                variant="contained"
+                startIcon={<Share2 />}
+                onClick={() => setShowExport(true)} 
+              >
+                Export
+              </Button>
             )}
-            <button onClick={() => setShowPicker(true)} className="btn-primary gap-2">
-              <SlidersHorizontal size={15} />
+            <Button
+              variant="contained"
+              startIcon={<TuneOutlinedIcon sx={{ fontSize: '12px'}} />}
+              onClick={() => setShowPicker(true)}
+            >
               {validSelected.length === 0 ? 'Select Deals' : 'Change'}
-            </button>
-          </div>
+            </Button>
+          </Box>
         }
       />
 
       {/* ── Main content ── */}
       {!hasDeals ? (
-        <EmptyState
-          icon={ArrowLeftRight}
+        <EmptyCard
+          Icon={NavItems[2].Icon}
           title="No deals to compare"
           description="Add some purchase or lease deals first, then come back here to compare them."
         />
       ) : validSelected.length < 2 ? (
-        <EmptyState
-          icon={ArrowLeftRight}
+        <EmptyCard
+          Icon={NavItems[2].Icon}
           title={validSelected.length === 1 ? 'Select one more deal' : 'Select deals to compare'}
           description={
             validSelected.length === 1
@@ -65,9 +79,13 @@ export default function ComparisonPage() {
               : 'Choose 2 or 3 deals from your saved purchases and leases.'
           }
           action={
-            <button onClick={() => setShowPicker(true)} className="btn-primary">
-              <SlidersHorizontal size={15} /> Select Deals
-            </button>
+            <Button
+              variant="contained"
+              startIcon={<TuneOutlinedIcon sx={{ fontSize: '12px'}} />}
+              onClick={() => setShowPicker(true)}
+            >
+              Select Deals
+            </Button>
           }
         />
       ) : (

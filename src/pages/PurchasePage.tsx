@@ -1,7 +1,8 @@
-import { useState } from "react";
 import type { PurchaseDeal } from "@/types";
+import { useState } from "react";
 
 import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
 
 import { useDeals } from "@/context/DealsContext";
@@ -12,6 +13,7 @@ import DealDetail from "@/components/shared/DealDetail";
 import PurchaseForm from "@/components/Purchase/PurchaseForm";
 
 import { Modal, ConfirmDialog } from "@/components/shared/UI";
+
 import { EmptyCard } from "@/components/shared/EmptyCard";
 import { NavItems } from "@/components/layout/nav";
 
@@ -55,7 +57,6 @@ export default function PurchasePage() {
         }
         action={
           <Button
-            size="small"
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setModalState({ type: "new", deal: null })}
@@ -72,7 +73,6 @@ export default function PurchasePage() {
           description="Save different configurations to compare offers from multiple dealers."
           action={
             <Button
-              size="small"
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setModalState({ type: "new", deal: null })}
@@ -82,23 +82,21 @@ export default function PurchasePage() {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Grid container spacing={1}>
           {purchases.map((deal) => (
-            <div
-              key={deal.id}
-              onClick={() => setModalState({ type: "detail", deal })}
-              className="cursor-pointer"
-            >
-              <DealCard
-                deal={deal}
-                onEdit={(d) =>
-                  setModalState({ type: "edit", deal: d as PurchaseDeal })
-                }
-                onDelete={(d) => setConfirmDelete(d as PurchaseDeal)}
-              />
-            </div>
+            <Grid key={deal.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+              <div onClick={() => setModalState({ type: 'detail', deal })} style={{ cursor: 'pointer' }}>
+                <DealCard
+                  deal={deal}
+                  onEdit={(d) =>
+                    setModalState({ type: "edit", deal: d as PurchaseDeal })
+                  }
+                  onDelete={(d) => setConfirmDelete(d as PurchaseDeal)}
+                />
+              </div>
+            </Grid>
           ))}
-        </div>
+        </Grid>
       )}
 
       {/* ── New / Edit modal ── */}

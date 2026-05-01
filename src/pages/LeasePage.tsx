@@ -1,19 +1,19 @@
 import type { LeaseDeal } from '@/types'
-
 import { useState } from 'react'
 
-
 import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
 
 import { useDeals } from '@/context/DealsContext'
+import { Layout } from '@/components/layout/layout'
+import { PageHeader } from '@/components/layout/page-header'
 import DealCard   from '@/components/shared/DealCard'
 import DealDetail from '@/components/shared/DealDetail'
 import LeaseForm  from '@/components/Lease/LeaseForm'
+
 import { Modal, ConfirmDialog } from '@/components/shared/UI'
 
-import { Layout } from '@/components/layout/layout'
-import { PageHeader } from '@/components/layout/page-header'
 import { EmptyCard } from "@/components/shared/EmptyCard";
 import { NavItems } from "@/components/layout/nav";
 
@@ -50,7 +50,6 @@ export default function LeasePage() {
         subtitle={leases.length > 0 ? `${leases.length} saved deal${leases.length !== 1 ? 's' : ''}` : null}
         action={
           <Button
-            size="small"
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setModalState({ type: "new", deal: null })}
@@ -67,7 +66,6 @@ export default function LeasePage() {
           description="Compare offers from different dealers, with different money factors, residuals, and mileage tiers."
           action={
             <Button
-              size="small"
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setModalState({ type: "new", deal: null })}
@@ -77,17 +75,19 @@ export default function LeasePage() {
           }
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Grid container spacing={1}>
           {leases.map(deal => (
-            <div key={deal.id} onClick={() => setModalState({ type: 'detail', deal })} className="cursor-pointer">
-              <DealCard
-                deal={deal}
-                onEdit={d => setModalState({ type: 'edit', deal: d as LeaseDeal })}
-                onDelete={d => setConfirmDelete(d as LeaseDeal)}
-              />
-            </div>
+            <Grid key={deal.id} size={{ xs: 12, sm: 6, lg: 4 }}>
+              <div onClick={() => setModalState({ type: 'detail', deal })} style={{ cursor: 'pointer' }}>
+                <DealCard
+                  deal={deal}
+                  onEdit={d => setModalState({ type: 'edit', deal: d as LeaseDeal })}
+                  onDelete={d => setConfirmDelete(d as LeaseDeal)}
+                />
+              </div>
+            </Grid>
           ))}
-        </div>
+        </Grid>
       )}
 
       {/* ── New / Edit modal ── */}

@@ -35,7 +35,7 @@ export const EmptyCard = ({
         </Typography>
       </Box>
       <Box sx={{ mb: 4, maxWidth: "20rem" }}>
-        <Typography component="p" variant="body2">
+        <Typography component="p" variant="body2" color="textDisabled">
           {description}
         </Typography>
       </Box>
