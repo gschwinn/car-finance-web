@@ -1,7 +1,19 @@
-import { CheckCircle2, Circle, ShoppingCart, Calendar } from 'lucide-react'
 import type { Deal } from '../../types'
 import { formatCurrency, dealMonthly, dealTermMonths, dealDisplayName } from '../../utils/calculations'
 import { useDeals } from '../../context/DealsContext'
+
+import Box from "@mui/material/Box";
+import ButtonBase from "@mui/material/ButtonBase";
+import Chip from "@mui/material/Chip";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import { alpha } from "@mui/material/styles";
+
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
+import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
+import { Button } from '../shared/Button';
 
 const MAX = 3
 
@@ -26,28 +38,34 @@ export default function ComparisonPicker({ selected, onChange, onClose }: Compar
   const isEmpty = purchases.length === 0 && leases.length === 0
 
   return (
-    <div className="p-4 space-y-4">
-      <div className="flex items-center justify-between px-1">
-        <p className="text-sm text-slate-400">
-          Select up to <span className="text-slate-200 font-medium">{MAX} deals</span> to compare
-        </p>
-        <span className="text-xs font-mono text-slate-500">{selected.length}/{MAX}</span>
-      </div>
+    <Stack spacing={2} sx={{ p: 2 }}>
+
+      {/* ── Header ── */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 0.5 }}>
+        <Typography variant="body2" color="text.secondary">
+          Select up to{' '}
+          <Box component="span" sx={{ color: 'text.primary', fontWeight: 500 }}>{MAX} deals</Box>
+          {' '}to compare
+        </Typography>
+        <Typography variant="caption" color="text.disabled" sx={{ fontFamily: 'monospace' }}>
+          {selected.length}/{MAX}
+        </Typography>
+      </Box>
 
       {isEmpty ? (
-        <div className="py-12 text-center text-slate-500">
-          <p className="text-sm">No deals saved yet.</p>
-          <p className="text-xs mt-1">Add purchases or leases first.</p>
-        </div>
+        <Box sx={{ py: 6, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.disabled">No deals saved yet.</Typography>
+          <Typography variant="caption" color="text.disabled">Add purchases or leases first.</Typography>
+        </Box>
       ) : (
-        <>
+        <Stack spacing={2}>
           {purchases.length > 0 && (
-            <section>
-              <div className="flex items-center gap-2 mb-2 px-1">
-                <ShoppingCart size={13} className="text-accent" />
-                <span className="section-header">Purchases</span>
-              </div>
-              <div className="space-y-2">
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, px: 0.5 }}>
+                <ShoppingCartOutlinedIcon sx={{ fontSize: 14, color: 'primary.main' }} />
+                <Typography variant="overline" color="text.disabled">Purchases</Typography>
+              </Box>
+              <Stack spacing={1}>
                 {purchases.map(deal => (
                   <PickerRow
                     key={deal.id}
@@ -57,17 +75,17 @@ export default function ComparisonPicker({ selected, onChange, onClose }: Compar
                     onToggle={toggle}
                   />
                 ))}
-              </div>
-            </section>
+              </Stack>
+            </Box>
           )}
 
           {leases.length > 0 && (
-            <section>
-              <div className="flex items-center gap-2 mb-2 px-1 mt-4">
-                <Calendar size={13} className="text-success" />
-                <span className="section-header">Leases</span>
-              </div>
-              <div className="space-y-2">
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, px: 0.5 }}>
+                <CalendarTodayOutlinedIcon sx={{ fontSize: 14, color: 'success.main' }} />
+                <Typography variant="overline" color="text.disabled">Leases</Typography>
+              </Box>
+              <Stack spacing={1}>
                 {leases.map(deal => (
                   <PickerRow
                     key={deal.id}
@@ -77,25 +95,28 @@ export default function ComparisonPicker({ selected, onChange, onClose }: Compar
                     onToggle={toggle}
                   />
                 ))}
-              </div>
-            </section>
+              </Stack>
+            </Box>
           )}
-        </>
+        </Stack>
       )}
 
-      <div className="flex gap-3 pt-2 border-t border-surface-700">
-        <button
+      {/* ── Footer ── */}
+      <Box sx={{ display: 'flex', gap: 1.5, pt: 1, borderTop: 1, borderColor: 'divider' }}>
+        <Button
           onClick={() => onChange([])}
-          className="btn-ghost text-slate-500 text-sm"
           disabled={selected.length === 0}
+          variant="text"
+          color="info"
+          fullWidth
         >
           Clear
-        </button>
-        <button onClick={onClose} className="btn-primary flex-1">
+        </Button>
+        <Button onClick={onClose} variant="contained" color="primary" fullWidth>
           Compare {selected.length > 0 ? `(${selected.length})` : ''}
-        </button>
-      </div>
-    </div>
+        </Button>
+      </Box>
+    </Stack>
   )
 }
 
@@ -108,34 +129,48 @@ interface PickerRowProps {
 
 function PickerRow({ deal, isSelected, disabled, onToggle }: PickerRowProps) {
   return (
-    <button
-      type="button"
+    <ButtonBase
       onClick={() => onToggle(deal)}
       disabled={disabled}
-      className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left
-                  transition-all duration-150
-                  ${isSelected
-                    ? 'bg-accent/10 border-accent/40'
-                    : disabled
-                      ? 'bg-surface-700/30 border-surface-700 opacity-40 cursor-not-allowed'
-                      : 'bg-surface-700 border-surface-600 hover:border-slate-500'}`}
+      sx={(th) => ({
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        p: 1.5,
+        borderRadius: 2,
+        border: '1px solid',
+        textAlign: 'left',
+        transition: 'all 150ms',
+        ...(isSelected ? {
+          backgroundColor: alpha(th.palette.primary.main, 0.1),
+          borderColor: alpha(th.palette.primary.main, 0.4),
+        } : {
+          backgroundColor: '#1e293b',
+          borderColor: '#334155',
+          '&:hover': { borderColor: '#475569' },
+        }),
+        '&.Mui-disabled': { opacity: 0.4 },
+      })}
     >
       {isSelected
-        ? <CheckCircle2 size={18} className="text-accent shrink-0" />
-        : <Circle      size={18} className="text-slate-500 shrink-0" />
+        ? <CheckCircleOutlinedIcon sx={{ fontSize: 18, color: 'primary.main', flexShrink: 0 }} />
+        : <RadioButtonUncheckedIcon sx={{ fontSize: 18, color: 'text.disabled', flexShrink: 0 }} />
       }
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-slate-200 truncate">{dealDisplayName(deal)}</p>
-        <p className="text-xs text-slate-500 mt-0.5">
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="body2" color="text.primary" noWrap sx={{ fontWeight: 500 }}>
+          {dealDisplayName(deal)}
+        </Typography>
+        <Typography variant="caption" color="text.secondary">
           {formatCurrency(dealMonthly(deal))}/mo · {dealTermMonths(deal)} mo
-        </p>
-      </div>
-      <span className={`text-xs px-2 py-0.5 rounded-full border shrink-0
-        ${deal.type === 'purchase'
-          ? 'bg-accent/10 text-accent border-accent/20'
-          : 'bg-success/10 text-success border-success/20'}`}>
-        {deal.type === 'purchase' ? 'Buy' : 'Lease'}
-      </span>
-    </button>
+        </Typography>
+      </Box>
+      <Chip
+        label={deal.type === 'purchase' ? 'Buy' : 'Lease'}
+        size="small"
+        color={deal.type === 'purchase' ? 'primary' : 'success'}
+        variant="outlined"
+      />
+    </ButtonBase>
   )
 }

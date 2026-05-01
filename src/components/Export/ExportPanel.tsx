@@ -1,11 +1,22 @@
 import { useState } from 'react'
-import { Download, Copy, Check } from 'lucide-react'
 import type { Deal } from '../../types'
 import {
   formatCurrency, dealMonthly, dealTotal, dealTermMonths,
   dealDisplayName, dealSummaryRows,
 } from '../../utils/calculations'
 import { downloadFile } from '../../utils/storage'
+
+import Box from "@mui/material/Box";
+import Stack from "@mui/material/Stack";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Typography from "@mui/material/Typography";
+
+import CheckIcon from "@mui/icons-material/Check";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
+import ShareOutlinedIcon from "@mui/icons-material/ShareOutlined";
+import { Button } from '../shared/Button';
 
 // ── Text builder ──────────────────────────────────────────────────────────────
 
@@ -112,51 +123,71 @@ export default function ExportPanel({ deals }: ExportPanelProps) {
   }
 
   return (
-    <div className="p-6 space-y-4">
-      {/* Format toggle */}
-      <div className="flex gap-2">
-        {(['text', 'csv'] as const).map(f => (
-          <button key={f} type="button"
-            onClick={() => setFormat(f)}
-            className={`flex-1 py-2 rounded-xl text-sm font-medium border transition-colors
-              ${format === f
-                ? 'bg-accent/20 border-accent text-accent'
-                : 'bg-surface-700 border-surface-600 text-slate-400 hover:border-slate-500'}`}
-          >
-            {f === 'text' ? 'Plain Text' : 'CSV'}
-          </button>
-        ))}
-      </div>
+    <Stack spacing={2} sx={{ p: 2.5 }}>
 
-      {/* Preview */}
-      <pre className="bg-surface-700 border border-surface-600 rounded-xl p-4
-                      text-xs font-mono text-slate-300 overflow-auto max-h-72
-                      whitespace-pre leading-relaxed">
+      {/* ── Format toggle ── */}
+      <ToggleButtonGroup
+        color="primary"
+        value={format}
+        exclusive
+        onChange={(_, val) => val && setFormat(val)}
+        size="small"
+        fullWidth
+      >
+        <ToggleButton value="text">Plain Text</ToggleButton>
+        <ToggleButton value="csv">CSV</ToggleButton>
+      </ToggleButtonGroup>
+
+      {/* ── Preview ── */}
+      <Box
+        component="pre"
+        sx={{
+          backgroundColor: '#1e293b',
+          border: '1px solid #334155',
+          borderRadius: 2,
+          p: 2,
+          fontSize: '0.75rem',
+          fontFamily: 'monospace',
+          color: '#cbd5e1',
+          overflow: 'auto',
+          maxHeight: 288,
+          whiteSpace: 'pre',
+          lineHeight: 1.625,
+          m: 0,
+        }}
+      >
         {content}
-      </pre>
+      </Box>
 
-      {/* Actions */}
-      <div className="flex gap-2 flex-wrap">
-        <button onClick={handleCopy} className="btn-secondary flex-1 gap-2">
-          {copied ? <Check size={15} className="text-success" /> : <Copy size={15} />}
-          {copied ? 'Copied!' : 'Copy'}
-        </button>
-        <button onClick={handleDownload} className="btn-primary flex-1 gap-2">
-          <Download size={15} />
-          Download .{format === 'csv' ? 'csv' : 'txt'}
-        </button>
+      {/* ── Actions ── */}
+      <Stack spacing={1}>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            onClick={handleCopy}
+            variant="outlined"
+            fullWidth
+            startIcon={copied ? <CheckIcon sx={{ color: 'success.main' }} /> : <ContentCopyIcon />}
+            color={copied ? 'success' : 'info'}
+          >
+            {copied ? 'Copied!' : 'Copy'}
+          </Button>
+          <Button
+            color="primary"
+            onClick={handleDownload}
+            variant="contained"
+            fullWidth
+            startIcon={<DownloadOutlinedIcon />}
+          >
+            Download .{format === 'csv' ? 'csv' : 'txt'}
+          </Button>
+        </Box>
         {canShare && (
-          <button onClick={handleShare} className="btn-secondary w-full gap-2 mt-1">
+          <Button color="info" onClick={handleShare} variant="outlined" fullWidth startIcon={<ShareOutlinedIcon />}>
             Share
-          </button>
+          </Button>
         )}
-      </div>
+      </Stack>
 
-      {format === 'csv' && (
-        <p className="text-xs text-slate-500 text-center">
-          CSV opens in Excel, Numbers, or Google Sheets
-        </p>
-      )}
-    </div>
+    </Stack>
   )
 }

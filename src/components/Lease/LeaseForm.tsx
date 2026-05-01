@@ -312,6 +312,7 @@ export default function LeaseForm({
         Lease Term
       </Typography>
       <ToggleButtonGroup
+        color="primary"
         value={form.leaseTermMonths}
         exclusive
         onChange={(_, val) => val !== null && set("leaseTermMonths", val)}
@@ -330,6 +331,7 @@ export default function LeaseForm({
         Annual Mileage
       </Typography>
       <ToggleButtonGroup
+        color="primary"
         value={form.mileageAllowancePerYear}
         exclusive
         onChange={(_, val) =>

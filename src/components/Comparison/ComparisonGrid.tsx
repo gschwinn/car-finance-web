@@ -1,10 +1,15 @@
-import { CheckCircle2 } from 'lucide-react'
 import type { Deal } from '../../types'
 import {
   formatCurrency, bestIndex,
   dealMonthly, dealTotal, dealEffectiveMonthly, dealTermMonths, dealDisplayName, dealSummaryRows,
 } from '../../utils/calculations'
-import { DealTypeBadge } from "@/components/shared/DealBadge";
+
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Paper from "@mui/material/Paper";
+import Typography from "@mui/material/Typography";
+import { alpha } from "@mui/material/styles";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 function allLabels(deals: Deal[]): string[] {
   const seen = new Set<string>()
@@ -25,11 +30,11 @@ interface KeyRow {
 }
 
 const KEY_ROWS: KeyRow[] = [
-  { label: 'Monthly Payment', getValue: d => dealMonthly(d),    format: v => formatCurrency(v), lower: true },
+  { label: 'Monthly Payment',   getValue: d => dealMonthly(d),          format: v => formatCurrency(v), lower: true },
   { label: 'Effective Monthly', getValue: d => dealEffectiveMonthly(d), format: v => formatCurrency(v), lower: true },
-  { label: 'Total Cost',      getValue: d => dealTotal(d),      format: v => formatCurrency(v), lower: true },
-  { label: 'Term',            getValue: d => dealTermMonths(d), format: v => `${v} mo`,         lower: null },
-  { label: 'Down Payment',    getValue: d => d.downPayment,     format: v => formatCurrency(v), lower: true },
+  { label: 'Total Cost',        getValue: d => dealTotal(d),            format: v => formatCurrency(v), lower: true },
+  { label: 'Term',              getValue: d => dealTermMonths(d),       format: v => `${v} mo`,         lower: null },
+  { label: 'Down Payment',      getValue: d => d.downPayment,           format: v => formatCurrency(v), lower: true },
 ]
 
 interface ComparisonGridProps {
@@ -38,30 +43,50 @@ interface ComparisonGridProps {
 
 export default function ComparisonGrid({ deals }: ComparisonGridProps) {
   const labels = allLabels(deals)
+  const cols = `140px repeat(${deals.length}, 1fr)`
 
   return (
-    <div className="w-full overflow-x-auto animate-fade-in">
-      <div className="min-w-[480px]">
+    <Box sx={{ width: '100%', overflowX: 'auto' }}>
+      <Box sx={{ minWidth: 480 }}>
 
         {/* ── Column headers ── */}
-        <div className="grid gap-2 mb-4" style={{ gridTemplateColumns: `140px repeat(${deals.length}, 1fr)` }}>
-          <div />
+        <Box sx={{ display: 'grid', gridTemplateColumns: cols, gap: 1, mb: 2 }}>
+          <Box />
           {deals.map(deal => (
-            <div key={deal.id} className="card p-3 text-center">
-              <DealTypeBadge type={deal.type} />
-              <p className="text-sm font-semibold text-slate-200 mt-2 leading-tight line-clamp-2">
+            <Paper key={deal.id} variant="outlined" sx={{ p: 1.5, textAlign: 'center' }}>
+              <Chip
+                label={deal.type === 'purchase' ? 'Purchase' : 'Lease'}
+                size="small"
+                color={deal.type === 'purchase' ? 'primary' : 'success'}
+                variant="outlined"
+              />
+              <Typography
+                variant="body2"
+                color="text.primary"
+                sx={{
+                  mt: 1,
+                  fontWeight: 600,
+                  lineHeight: 1.3,
+                  overflow: 'hidden',
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                }}
+              >
                 {dealDisplayName(deal)}
-              </p>
+              </Typography>
               {deal.carYear && (
-                <p className="text-xs text-slate-500 mt-0.5">{deal.carYear}</p>
+                <Typography variant="caption" color="text.disabled">{deal.carYear}</Typography>
               )}
-            </div>
+            </Paper>
           ))}
-        </div>
+        </Box>
 
         {/* ── Key comparison rows ── */}
-        <div className="mb-2">
-          <p className="section-header px-1 mb-2">Key Metrics</p>
+        <Box sx={{ mb: 1 }}>
+          <Typography variant="overline" color="textDisabled" sx={{ fontWeight: 700, px: 0.5, mb: 1, display: 'block' }}>
+            Key Metrics
+          </Typography>
           {KEY_ROWS.map(({ label, getValue, format, lower }) => {
             const values = deals.map(getValue)
             const winIdx = lower !== null ? bestIndex(values, lower) : null
@@ -70,11 +95,13 @@ export default function ComparisonGrid({ deals }: ComparisonGridProps) {
                 values={values.map(format)} winnerIdx={winIdx} />
             )
           })}
-        </div>
+        </Box>
 
         {/* ── Deal-type-specific rows ── */}
-        <div className="mt-4">
-          <p className="section-header px-1 mb-2">Deal Details</p>
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="overline" color="textDisabled" sx={{ fontWeight: 700, px: 0.5, mb: 1, display: 'block' }}>
+            Deal Details
+          </Typography>
           {labels.map(label => {
             const values = deals.map(d => {
               const row = dealSummaryRows(d).find(r => r.label === label)
@@ -84,9 +111,10 @@ export default function ComparisonGrid({ deals }: ComparisonGridProps) {
               <CompRow key={label} label={label} deals={deals} values={values} winnerIdx={null} detail />
             )
           })}
-        </div>
-      </div>
-    </div>
+        </Box>
+
+      </Box>
+    </Box>
   )
 }
 
@@ -100,36 +128,49 @@ interface CompRowProps {
 
 function CompRow({ label, deals, values, winnerIdx, detail = false }: CompRowProps) {
   return (
-    <div
-      className="grid gap-2 mb-1.5 items-center"
-      style={{ gridTemplateColumns: `140px repeat(${deals.length}, 1fr)` }}
+    <Box
+      sx={{ display: 'grid', gridTemplateColumns: `140px repeat(${deals.length}, 1fr)`, gap: 1, mb: 0.5, alignItems: 'center' }}
     >
-      <span className={`${detail ? 'text-xs' : 'text-sm'} text-slate-400 pr-2 leading-tight`}>
+      <Typography variant={detail ? 'caption' : 'body2'} color="textSecondary" sx={{ pr: 1, lineHeight: 1.3 }}>
         {label}
-      </span>
+      </Typography>
 
       {values.map((value, idx) => {
         const isWinner = winnerIdx === idx
         return (
-          <div
+          <Box
             key={deals[idx].id}
-            className={`relative flex items-center justify-center gap-1 rounded-xl px-2
-                        ${detail ? 'py-1.5' : 'py-2.5'}
-                        ${isWinner
-                          ? 'bg-success/10 border border-success/30'
-                          : 'bg-surface-700/50 border border-surface-700'}`}
+            sx={(th) => ({
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: 1,
+              px: 1,
+              py: detail ? 0.75 : 1.5,
+              border: '1px solid',
+              ...(isWinner ? {
+                backgroundColor: alpha(th.palette.success.main, 0.1),
+                borderColor: alpha(th.palette.success.main, 0.3),
+              } : {
+                backgroundColor: 'rgb(30 41 59 / 0.5)',
+                borderColor: '#1e293b',
+              }),
+            })}
           >
             {isWinner && (
-              <CheckCircle2 size={12} className="text-success absolute top-1 right-1.5" />
+              <CheckCircleIcon sx={{ position: 'absolute', top: 4, right: 5, fontSize: 12, color: 'success.main' }} />
             )}
-            <span className={`font-mono text-center
-              ${detail ? 'text-xs' : 'text-sm font-semibold'}
-              ${isWinner ? 'text-success' : 'text-slate-200'}`}>
+            <Typography
+              variant={detail ? 'caption' : 'body2'}
+              color={isWinner ? 'success.main' : 'text.primary'}
+              sx={{ fontFamily: 'monospace', fontWeight: detail ? 400 : 600, textAlign: 'center' }}
+            >
               {value}
-            </span>
-          </div>
+            </Typography>
+          </Box>
         )
       })}
-    </div>
+    </Box>
   )
 }

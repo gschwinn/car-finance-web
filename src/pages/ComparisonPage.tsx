@@ -50,7 +50,7 @@ export default function ComparisonPage() {
             {validSelected.length >= 2 && (
               <Button
                 sx={{ mr: 1 }}
-                color="secondary"
+                color="info"
                 variant="contained"
                 startIcon={<ShareOutlinedIcon />}
                 onClick={() => setShowExport(true)} 
