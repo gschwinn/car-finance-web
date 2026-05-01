@@ -17,6 +17,10 @@ const theme = createTheme({
       dark: '#7c3aed',        // violet-600
       contrastText: '#0a0f1a',
     },
+    info: {
+      main: '#1e293b',
+      light: '#334155',
+    },
     error: {
       main: '#f87171',        // danger
     },

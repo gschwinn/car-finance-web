@@ -1,7 +1,15 @@
 import type { LeaseDeal } from "@/types";
 import { useState, useEffect } from "react";
 
+import Box from "@mui/material/Box";
+import Divider from "@mui/material/Divider";
 import Grid from "@mui/material/Grid";
+import InputAdornment from "@mui/material/InputAdornment";
+import Stack from "@mui/material/Stack";
+import TextField from "@mui/material/TextField";
+import ToggleButton from "@mui/material/ToggleButton";
+import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
+import Typography from "@mui/material/Typography";
 
 import {
   leaseMonthlyPayment,
@@ -12,14 +20,23 @@ import {
   formatCurrency,
 } from "@/utils/calculations";
 import { defaultLease, LEASE_TERMS, MILEAGE_OPTS } from "@/utils/defaults";
-
-import { FormField, SectionDivider } from "@/components/shared/UI";
 import { StatTile } from "@/components/shared/StatTile";
+import { Button } from "../shared/Button";
 
 interface LeaseFormProps {
   initial: Partial<LeaseDeal>;
   onSave: (data: LeaseDeal) => void;
   onCancel: () => void;
+}
+
+function SectionLabel({ children }: { children: string }) {
+  return (
+    <Divider textAlign="left" sx={{ my: 0.5 }}>
+      <Typography variant="overline" color="text.disabled">
+        {children}
+      </Typography>
+    </Divider>
+  );
 }
 
 export default function LeaseForm({
@@ -96,7 +113,7 @@ export default function LeaseForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="p-6 space-y-5">
+    <Stack component="form" onSubmit={handleSubmit} spacing={2} sx={{ p: 2.5 }}>
       {/* ── Preview banner ── */}
       {preview && (
         <Grid container spacing={1}>
@@ -119,257 +136,284 @@ export default function LeaseForm({
       )}
 
       {/* ── Deal name ── */}
-      <SectionDivider label="Deal Name" />
-      <FormField
+      <SectionLabel>Deal Name</SectionLabel>
+      <TextField
         label="Label (optional)"
-        hint="e.g. BMW 3 Series – BMW of Philly"
-      >
-        <input
-          className="input"
-          placeholder="Auto-generated from make/model if blank"
-          value={form.name}
-          onChange={(e) => set("name", e.target.value)}
-        />
-      </FormField>
+        placeholder="Auto-generated from make/model if blank"
+        value={form.name}
+        onChange={(e) => set("name", e.target.value)}
+        helperText="e.g. BMW 3 Series – BMW of Philly"
+        size="small"
+        fullWidth
+      />
 
       {/* ── Vehicle ── */}
-      <SectionDivider label="Vehicle" />
-      <div className="grid grid-cols-2 gap-4">
-        <FormField label="Make *">
-          <input
-            className="input"
+      <SectionLabel>Vehicle</SectionLabel>
+      <Grid container spacing={2}>
+        <Grid size={6}>
+          <TextField
+            label="Make *"
             placeholder="BMW"
             value={form.carMake}
-            onChange={(e) => set("carMake", e.target.value)}
+            size="small"
+            fullWidth
             required
+            onChange={(e) => set("carMake", e.target.value)}
           />
-        </FormField>
-        <FormField label="Model *">
-          <input
-            className="input"
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Model *"
             placeholder="330i"
             value={form.carModel}
-            onChange={(e) => set("carModel", e.target.value)}
+            size="small"
+            fullWidth
             required
+            onChange={(e) => set("carModel", e.target.value)}
           />
-        </FormField>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <FormField label="Year">
-          <input
-            className="input"
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Year"
             type="number"
-            min="2000"
-            max="2030"
             value={form.carYear}
+            size="small"
+            fullWidth
             onChange={(e) => set("carYear", parseInt(e.target.value) || 2025)}
+            slotProps={{ htmlInput: { min: 2000, max: 2030 } }}
           />
-        </FormField>
-        <FormField label="Trim Level">
-          <input
-            className="input"
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Trim Level"
             placeholder="xDrive"
             value={form.trimLevel}
+            size="small"
+            fullWidth
             onChange={(e) => set("trimLevel", e.target.value)}
           />
-        </FormField>
-      </div>
+        </Grid>
+      </Grid>
 
       {/* ── Lease Terms ── */}
-      <SectionDivider label="Lease Terms" />
-      <div className="grid grid-cols-2 gap-4">
-        <FormField label="MSRP *">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
-              $
-            </span>
-            <input
-              className="input pl-6"
-              type="number"
-              min="0"
-              placeholder="50000"
-              value={form.msrp || ""}
-              onChange={(e) => set("msrp", num(e.target.value))}
-              required
-            />
-          </div>
-        </FormField>
-        <FormField label="Negotiated Price *">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
-              $
-            </span>
-            <input
-              className="input pl-6"
-              type="number"
-              min="0"
-              placeholder="0"
-              value={form.negotiatedPrice || ""}
-              onChange={(e) => set("negotiatedPrice", num(e.target.value))}
-              required
-            />
-          </div>
-        </FormField>
-        <FormField label="Mfr Incentives">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
-              $
-            </span>
-            <input
-              className="input pl-6"
-              type="number"
-              min="0"
-              placeholder="0"
-              value={form.mfrIncentives || ""}
-              onChange={(e) => set("mfrIncentives", num(e.target.value))}
-              required
-            />
-          </div>
-        </FormField>
-        <FormField label="Residual %" hint="e.g. 55 for 55%">
-          <div className="relative">
-            <input
-              className="input pr-6"
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              placeholder="55"
-              value={residualPercentInput}
-              onChange={(e) => setResidualPercentInput(e.target.value)}
-              onBlur={commitResidualPercentInput}
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
-              %
-            </span>
-          </div>
-        </FormField>
-        <FormField label="Money Factor" hint="e.g. 0.00125">
-          <input
-            className="input font-mono"
+      <SectionLabel>Lease Terms</SectionLabel>
+      <Grid container spacing={2}>
+        <Grid size={6}>
+          <TextField
+            label="MSRP *"
             type="number"
-            min="0"
-            step="0.00001"
-            placeholder="0.00125"
+            value={form.msrp || ""}
+            size="small"
+            fullWidth
+            required
+            onChange={(e) => set("msrp", num(e.target.value))}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+          />
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Negotiated Price *"
+            type="number"
+            value={form.negotiatedPrice || ""}
+            size="small"
+            fullWidth
+            required
+            onChange={(e) => set("negotiatedPrice", num(e.target.value))}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+          />
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Mfr Incentives"
+            type="number"
+            value={form.mfrIncentives || ""}
+            size="small"
+            fullWidth
+            onChange={(e) => set("mfrIncentives", num(e.target.value))}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+          />
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Residual %"
+            type="number"
+            value={residualPercentInput}
+            onChange={(e) => setResidualPercentInput(e.target.value)}
+            onBlur={commitResidualPercentInput}
+            helperText="e.g. 55 for 55%"
+            size="small"
+            fullWidth
+            slotProps={{
+              input: {
+                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+              },
+              htmlInput: { min: 0, max: 100, step: 0.01 },
+            }}
+          />
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Money Factor"
+            type="number"
             value={form.moneyFactor || ""}
             onChange={(e) => set("moneyFactor", num(e.target.value))}
+            helperText="e.g. 0.00125"
+            size="small"
+            fullWidth
+            slotProps={{
+              input: { sx: { fontFamily: "monospace" } },
+              htmlInput: { min: 0, step: 0.00001 },
+            }}
           />
-        </FormField>
-        <FormField label="Tax Rate (%)" hint="e.g. 8.5 for 8.5%">
-          <div className="relative">
-            <input
-              className="input pr-6"
-              type="number"
-              min="0"
-              max="20"
-              placeholder="6.625"
-              step="0.001"
-              value={taxRateInput}
-              onChange={(e) => setTaxRateInput(e.target.value)}
-              onBlur={commitTaxRateInput}
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
-              %
-            </span>
-          </div>
-        </FormField>
-      </div>
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Tax Rate (%)"
+            type="number"
+            value={taxRateInput}
+            onChange={(e) => setTaxRateInput(e.target.value)}
+            onBlur={commitTaxRateInput}
+            helperText="e.g. 8.5 for 8.5%"
+            size="small"
+            fullWidth
+            slotProps={{
+              input: {
+                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+              },
+              htmlInput: { min: 0, max: 20, step: 0.001 },
+            }}
+          />
+        </Grid>
+      </Grid>
 
       {/* ── Lease Term selector ── */}
-      <FormField label="Lease Term">
-        <div className="flex gap-2 flex-wrap">
-          {LEASE_TERMS.map((mo) => (
-            <button
-              key={mo}
-              type="button"
-              onClick={() => set("leaseTermMonths", mo)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors
-                ${
-                  form.leaseTermMonths === mo
-                    ? "bg-success/20 border-success text-success"
-                    : "bg-surface-700 border-surface-600 text-slate-400 hover:border-slate-500"
-                }`}
-            >
-              {mo} mo
-            </button>
-          ))}
-        </div>
-      </FormField>
+      <Typography variant="caption" color="text.secondary">
+        Lease Term
+      </Typography>
+      <ToggleButtonGroup
+        value={form.leaseTermMonths}
+        exclusive
+        onChange={(_, val) => val !== null && set("leaseTermMonths", val)}
+        size="small"
+        fullWidth
+      >
+        {LEASE_TERMS.map((mo) => (
+          <ToggleButton key={mo} value={mo}>
+            {mo} mo
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
 
       {/* ── Mileage selector ── */}
-      <FormField label="Annual Mileage">
-        <div className="flex gap-2 flex-wrap">
-          {MILEAGE_OPTS.map((mi) => (
-            <button
-              key={mi}
-              type="button"
-              onClick={() => set("mileageAllowancePerYear", mi)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors
-                ${
-                  form.mileageAllowancePerYear === mi
-                    ? "bg-success/20 border-success text-success"
-                    : "bg-surface-700 border-surface-600 text-slate-400 hover:border-slate-500"
-                }`}
-            >
-              {mi / 1000}k mi
-            </button>
-          ))}
-        </div>
-      </FormField>
+      <Typography variant="caption" color="text.secondary">
+        Annual Mileage
+      </Typography>
+      <ToggleButtonGroup
+        value={form.mileageAllowancePerYear}
+        exclusive
+        onChange={(_, val) =>
+          val !== null && set("mileageAllowancePerYear", val)
+        }
+        size="small"
+        fullWidth
+      >
+        {MILEAGE_OPTS.map((mi) => (
+          <ToggleButton key={mi} value={mi}>
+            {mi / 1000}k mi
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
 
       {/* ── Upfront costs ── */}
-      <SectionDivider label="Upfront Costs" />
-      <div className="grid grid-cols-2 gap-4">
-        <FormField label="Cap Cost Reduction">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
-              $
-            </span>
-            <input
-              className="input pl-6"
-              type="number"
-              min="0"
-              step="100"
-              placeholder="0"
-              value={form.downPayment || ""}
-              onChange={(e) => set("downPayment", num(e.target.value))}
-            />
-          </div>
-        </FormField>
-        <FormField label="Acquisition Fee">
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">
-              $
-            </span>
-            <input
-              className="input pl-6"
-              type="number"
-              min="0"
-              placeholder="0"
-              value={form.acquisitionFee || ""}
-              onChange={(e) => set("acquisitionFee", num(e.target.value))}
-            />
-          </div>
-        </FormField>
-      </div>
+      <SectionLabel>Upfront Costs</SectionLabel>
+      <Grid container spacing={2}>
+        <Grid size={6}>
+          <TextField
+            label="Cap Cost Reduction"
+            type="number"
+            value={form.downPayment || ""}
+            size="small"
+            fullWidth
+            onChange={(e) => set("downPayment", num(e.target.value))}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0, step: 100 },
+            }}
+          />
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Acquisition Fee"
+            type="number"
+            value={form.acquisitionFee || ""}
+            size="small"
+            fullWidth
+            onChange={(e) => set("acquisitionFee", num(e.target.value))}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+          />
+        </Grid>
+      </Grid>
 
       {/* ── Footer ── */}
-      <div className="flex gap-3 pt-2 border-t border-surface-700">
-        <button
-          type="button"
+      <Box
+        sx={{
+          display: "flex",
+          gap: 1.5,
+          pt: 1,
+          borderTop: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Button
+          color="info"
           onClick={onCancel}
-          className="btn-secondary flex-1"
+          variant="outlined"
+          fullWidth
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
-          className="btn-primary flex-1"
+          color="primary"
+          variant="contained"
+          fullWidth
           disabled={!canSave}
         >
           Save Deal
-        </button>
-      </div>
-    </form>
+        </Button>
+      </Box>
+    </Stack>
   );
 }

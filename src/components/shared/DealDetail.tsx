@@ -1,7 +1,16 @@
-import { Pencil } from 'lucide-react'
 import type { Deal } from '../../types'
-import { StatTile } from './UI'
-import { DealTypeBadge } from "@/components/shared/DealBadge";
+
+import Box from "@mui/material/Box";
+import Chip from "@mui/material/Chip";
+import Divider from "@mui/material/Divider";
+import Grid from "@mui/material/Grid";
+import Paper from "@mui/material/Paper";
+import Stack from "@mui/material/Stack";
+import Typography from "@mui/material/Typography";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+
+import { StatTile } from '@/components/shared/StatTile'
+import { Button } from '@/components/shared/Button';
 import {
   formatCurrency,
   dealMonthly, dealTermMonths, dealTotal, dealDisplayName, dealSummaryRows,
@@ -14,55 +23,66 @@ interface DealDetailProps {
 }
 
 export default function DealDetail({ deal, onEdit }: DealDetailProps) {
-  const monthly         = dealMonthly(deal)
-  const total           = dealTotal(deal)
-  const rows            = dealSummaryRows(deal)
+  const monthly          = dealMonthly(deal)
+  const total            = dealTotal(deal)
+  const rows             = dealSummaryRows(deal)
   const effectivePayment = dealTotal(deal) / dealTermMonths(deal)
-  const name            = dealDisplayName(deal)
+  const name             = dealDisplayName(deal)
 
-  const accent3 = deal.type === 'purchase'
-    ? { label: 'Total Interest', value: formatCurrency(purchaseTotalInterest(deal)), accent: 'text-warning' }
-    : { label: 'Effective Pmt',  value: formatCurrency(effectivePayment),            accent: 'text-purple-400' }
+  const tile3Props = deal.type === 'purchase'
+    ? { label: 'Total Interest', value: formatCurrency(purchaseTotalInterest(deal)), color: 'warning' }
+    : { label: 'Effective Pmt',  value: formatCurrency(effectivePayment),            color: 'secondary.main' }
 
   return (
-    <div className="p-6 space-y-5">
-      {/* ── Header ── */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <DealTypeBadge type={deal.type} />
-            <span className="text-xs text-slate-500">{deal.carYear}</span>
-          </div>
-          <h2 className="font-display text-xl text-slate-100">{name}</h2>
-          {deal.trimLevel && <p className="text-sm text-slate-500 mt-0.5">{deal.trimLevel}</p>}
-        </div>
-        <button onClick={onEdit} className="btn-secondary gap-2">
-          <Pencil size={15} /> Edit
-        </button>
-      </div>
+    <Stack spacing={2.5} sx={{ p: 2.5 }}>
+
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+        <Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Chip
+              label={deal.type === 'purchase' ? 'Purchase' : 'Lease'}
+              size="small"
+              color={deal.type === 'purchase' ? 'primary' : 'success'}
+              variant="outlined"
+            />
+            <Typography variant="caption" color="text.disabled">{deal.carYear}</Typography>
+          </Box>
+          <Typography variant="h6">{name}</Typography>
+          {deal.trimLevel && (
+            <Typography variant="body2" color="text.disabled" sx={{ mt: 0.25 }}>{deal.trimLevel}</Typography>
+          )}
+        </Box>
+        <Button color="info" onClick={onEdit} variant="outlined" startIcon={<EditOutlinedIcon />}>
+          Edit
+        </Button>
+      </Box>
 
       {/* ── Key stats ── */}
-      <div className="grid grid-cols-3 gap-2">
-        <StatTile label="Monthly"       value={formatCurrency(monthly)} accent="text-success" />
-        <StatTile label="Total Cost"    value={formatCurrency(total)}   accent="text-accent" />
-        <StatTile label={accent3.label} value={accent3.value}           accent={accent3.accent} />
-      </div>
+      <Grid container spacing={1}>
+        <StatTile label="Monthly"           value={formatCurrency(monthly)} color="success" />
+        <StatTile label="Total Cost"        value={formatCurrency(total)}   color="primary.light" />
+        <StatTile label={tile3Props.label}  value={tile3Props.value}        color={tile3Props.color} />
+      </Grid>
 
       {/* ── Detail rows ── */}
-      <div className="card divide-y divide-surface-700 overflow-hidden">
-        {rows.map(({ label, value }) => (
-          <div key={label} className="flex items-center justify-between px-4 py-3">
-            <span className="text-sm text-slate-400">{label}</span>
-            <span className="text-sm font-medium font-mono text-slate-200">{value}</span>
-          </div>
+      <Paper variant="outlined">
+        {rows.map(({ label, value }, i) => (
+          <Box key={label}>
+            {i > 0 && <Divider />}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 2, py: 1.5 }}>
+              <Typography variant="body2" color="text.secondary">{label}</Typography>
+              <Typography variant="body2" color="text.primary" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>{value}</Typography>
+            </Box>
+          </Box>
         ))}
-      </div>
+      </Paper>
 
-      <p className="text-xs text-slate-600 text-center">
+      <Typography variant="caption" color="text.disabled" align="center" component="p">
         Saved {new Date(deal.createdAt!).toLocaleDateString('en-US', {
-          month: 'long', day: 'numeric', year: 'numeric'
+          month: 'long', day: 'numeric', year: 'numeric',
         })}
-      </p>
-    </div>
+      </Typography>
+
+    </Stack>
   )
 }

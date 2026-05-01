@@ -8,6 +8,7 @@ export const Button = ({ color, children, sx, ...props }: ButtonProps) => {
       variant="contained"
       sx={{
         ...sx,
+        ...(color === 'info' ? { border: 1, borderColor: 'divider' } : {}),
         '&:hover': {
           bgcolor: `${color}.light`
         },                
