@@ -2,11 +2,14 @@
   "name": "carfinance-web",
   "private": true,
   "version": "1.0.0",
-  "workspaces": ["ui"],
+  "workspaces": ["ui", "api"],
   "scripts": {
     "dev": "npm run dev -w ui",
     "build": "npm run build -w ui",
-    "preview": "npm run preview -w ui"
+    "preview": "npm run preview -w ui",
+    "dev:api": "npm run dev -w api",
+    "build:api": "npm run build -w api",
+    "start:api": "npm run start -w api"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
