@@ -9,7 +9,9 @@
     "preview": "npm run preview -w ui",
     "dev:api": "npm run dev -w api",
     "build:api": "npm run build -w api",
-    "start:api": "npm run start -w api"
+    "start:api": "npm run start -w api",
+    "build:docker": "docker build -f api/Dockerfile -t carfinance-api .",
+    "start:docker": "docker run -p 3000:3000 carfinance-api"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
