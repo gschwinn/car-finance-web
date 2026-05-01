@@ -15,7 +15,9 @@ export function purchaseMonthlyPayment(deal: PurchaseDeal): number {
 export function purchaseTotalCost(deal: PurchaseDeal): number {
   return purchaseMonthlyPayment(deal) * deal.loanTermMonths + deal.downPayment
 }
-
+export function purchaseDueAtSigning(deal: PurchaseDeal): number {
+  return deal.downPayment
+}
 export function purchaseTotalInterest(deal: PurchaseDeal): number {
   return purchaseTotalCost(deal) - deal.negotiatedPrice - deal.downPayment
 }
@@ -38,7 +40,7 @@ export function leaseTotalCost(deal: LeaseDeal): number {
 }
 
 export function leaseDueAtSigning(deal: LeaseDeal): number {
-  return leaseMonthlyPayment(deal) + (deal.downPayment + deal.acquisitionFee) * (1 + deal.taxRate) + (deal.acquisitionFee * deal.taxRate)
+  return leaseMonthlyPayment(deal) + (deal.downPayment + deal.acquisitionFee + deal.dealerFees ) * (1 + deal.taxRate) + (deal.mfrIncentives * deal.taxRate) + deal.govtFees
 }
 
 export function moneyFactorToAPR(moneyFactor: number): number {
@@ -84,6 +86,7 @@ export function purchaseSummaryRows(deal: PurchaseDeal): SummaryRow[] {
     { label: 'APR (Money Factor)', value: formatPercent(deal.interestRate) },
     { label: 'Tax Rate',         value: formatPercent(deal.taxRate) },
     { label: 'Incentives',       value: formatCurrency(deal.mfrIncentives) },
+    { label: 'Total Fees',       value: formatCurrency(deal.dealerFees + deal.govtFees) },
     { label: 'Total Interest',   value: formatCurrency(purchaseTotalInterest(deal)) },
     { label: 'Total Cost',       value: formatCurrency(purchaseTotalCost(deal)) },
   ]
@@ -101,6 +104,7 @@ export function leaseSummaryRows(deal: LeaseDeal): SummaryRow[] {
     { label: 'Term',               value: `${deal.leaseTermMonths} mo` },
     { label: 'Tax Rate',           value: formatPercent(deal.taxRate) },
     { label: 'Incentives',         value: formatCurrency(deal.mfrIncentives) },
+    { label: 'Total Fees',       value: formatCurrency(deal.dealerFees + deal.govtFees + deal.govtFees + deal.acquisitionFee) },
     { label: 'Total Cost',         value: formatCurrency(leaseTotalCost(deal)) },
   ]
 }
@@ -108,7 +112,9 @@ export function leaseSummaryRows(deal: LeaseDeal): SummaryRow[] {
 export function dealMonthly(deal: Deal): number {
   return deal.type === 'purchase' ? purchaseMonthlyPayment(deal) : leaseMonthlyPayment(deal)
 }
-
+export function dealDueAtSigning(deal: Deal): number {
+  return deal.type === 'purchase' ? purchaseDueAtSigning(deal) : leaseDueAtSigning(deal)
+} 
 export function dealTotal(deal: Deal): number {
   return deal.type === 'purchase' ? purchaseTotalCost(deal) : leaseTotalCost(deal)
 }
@@ -127,4 +133,22 @@ export function dealTermMonths(deal: Deal): number {
 
 export function dealDisplayName(deal: Deal): string {
   return deal.name?.trim() || `${deal.carYear} ${deal.carMake} ${deal.carModel}`
+}
+
+// Deal quality score: monthly payment / MSRP
+export function dealQualityRatio(deal: Deal): number | null {
+  if (!deal.msrp || deal.msrp === 0 || deal.type === 'purchase') return null
+  return dealEffectiveMonthly(deal) / deal.msrp
+}
+
+export function dealQualityTier(deal: Deal): {
+  label: 'Great Deal' | 'OK Deal' | 'Red Flag'
+  color: 'success' | 'warning' | 'error'
+  emoji: '🟢' | '🟡' | '🔴'
+} | null {
+  const ratio = dealQualityRatio(deal)
+  if (ratio === null) return null
+  if (ratio < 0.01)  return { label: 'Great Deal', color: 'success', emoji: '🟢' }
+  if (ratio <= 0.012) return { label: 'OK Deal',    color: 'warning', emoji: '🟡' }
+  return                     { label: 'Red Flag',   color: 'error',  emoji: '🔴' }
 }
