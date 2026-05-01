@@ -2,29 +2,14 @@
   "name": "carfinance-web",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
+  "workspaces": ["ui"],
   "scripts": {
-    "dev": "vite --host",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@mui/icons-material": "^9.0.0",
-    "@mui/material": "^9.0.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
-    "react-router-dom": "^7.13.0",
-    "uuid": "^10.0.0"
+    "dev": "npm run dev -w ui",
+    "build": "npm run build -w ui",
+    "preview": "npm run preview -w ui"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
-    "@types/uuid": "^10.0.0",
-    "@vitejs/plugin-react": "^6.0.1",
-    "typescript": "^6.0.3",
-    "vite": "^8.0.2"
+    "typescript": "^6.0.3"
   }
 }
