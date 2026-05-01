@@ -1,24 +1,5 @@
 import { type ReactNode } from 'react'
 
-// ── StatTile ──────────────────────────────────────────────────────────────────
-
-interface StatTileProps {
-  label: string
-  value: string
-  accent?: string
-  sub?: string
-}
-
-export function StatTile({ label, value, accent = 'text-slate-100', sub }: StatTileProps) {
-  return (
-    <div className="stat-tile text-center gap-0.5">
-      <span className="text-xs text-slate-500 uppercase tracking-wider mb-1">{label}</span>
-      <span className={`text-xl font-semibold font-mono ${accent}`}>{value}</span>
-      {sub && <span className="text-xs text-slate-600 mt-0.5">{sub}</span>}
-    </div>
-  )
-}
-
 // ── FormField ─────────────────────────────────────────────────────────────────
 
 interface FormFieldProps {

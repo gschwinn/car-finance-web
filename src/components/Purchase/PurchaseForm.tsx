@@ -1,8 +1,13 @@
+import type { PurchaseDeal } from '@/types'
 import { useState, useEffect } from 'react'
-import type { PurchaseDeal } from '../../types'
-import { FormField, SectionDivider, StatTile } from '../shared/UI'
-import { purchaseMonthlyPayment, purchaseTotalCost, purchaseTotalInterest, formatCurrency } from '../../utils/calculations'
-import { defaultPurchase, LOAN_TERMS } from '../../utils/defaults'
+
+import Grid from "@mui/material/Grid";
+
+import { StatTile } from '@/components/shared/StatTile'
+import { purchaseMonthlyPayment, purchaseTotalCost, purchaseTotalInterest, formatCurrency } from '@/utils/calculations'
+import { defaultPurchase, LOAN_TERMS } from '@/utils/defaults'
+
+import { FormField, SectionDivider } from '../shared/UI'
 
 interface PurchaseFormProps {
   initial: Partial<PurchaseDeal>
@@ -67,11 +72,11 @@ export default function PurchaseForm({ initial, onSave, onCancel }: PurchaseForm
 
       {/* ── Preview banner ── */}
       {form.negotiatedPrice > 0 && (
-        <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-surface-700/40 border border-surface-600/40">
-          <StatTile label="Monthly"  value={formatCurrency(preview.monthly)}  accent="text-success" />
-          <StatTile label="Total"    value={formatCurrency(preview.total)}    accent="text-accent" />
-          <StatTile label="Interest" value={formatCurrency(preview.interest)} accent="text-warning" />
-        </div>
+        <Grid container spacing={1}>
+          <StatTile label="Monthly"  value={formatCurrency(preview.monthly)}  color="success" />
+          <StatTile label="Total"    value={formatCurrency(preview.total)}    color="primary.light" />
+          <StatTile label="Interest" value={formatCurrency(preview.interest)} color="warning" />
+        </Grid>
       )}
 
       {/* ── Deal name ── */}
