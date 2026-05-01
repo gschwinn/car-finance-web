@@ -3,9 +3,9 @@
   "private": true,
   "version": "1.0.0",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "UI_DIST_DIR=../../ui/dist tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "UI_DIST_DIR=../../ui/dist node dist/index.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
