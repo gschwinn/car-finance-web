@@ -11,6 +11,12 @@ const theme = createTheme({
       dark: '#0c4a6e',        // accent-muted
       contrastText: '#0a0f1a',
     },
+    secondary: {
+      main: '#a78bfa',        // violet-400
+      light: '#c4b5fd',       // violet-300
+      dark: '#7c3aed',        // violet-600
+      contrastText: '#0a0f1a',
+    },
     error: {
       main: '#f87171',        // danger
     },
