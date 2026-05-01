@@ -22,7 +22,7 @@ import PurchaseForm from "@/components/Purchase/PurchaseForm";
 import { EmptyCard } from "@/components/shared/EmptyCard";
 import { NavItems } from "@/components/layout/nav";
 
-type ModalType = "new" | "edit" | "detail" | null;
+type ModalType = "new" | "edit" | "detail" | "delete" | null;
 
 interface ModalState {
   type: ModalType;
@@ -36,7 +36,6 @@ export default function PurchasePage() {
     type: null,
     deal: null,
   });
-  const [confirmDelete, setConfirmDelete] = useState<PurchaseDeal | null>(null);
 
   const close = () => setModalState({ type: null, deal: null });
 
@@ -47,8 +46,8 @@ export default function PurchasePage() {
   }
 
   function confirmDeleteDeal() {
-    if (confirmDelete) deletePurchase(confirmDelete.id!);
-    setConfirmDelete(null);
+    if (modalState.type === 'delete') deletePurchase(modalState.deal?.id!)
+    close()
   }
 
   return (
@@ -98,7 +97,7 @@ export default function PurchasePage() {
                   onEdit={(d) =>
                     setModalState({ type: "edit", deal: d as PurchaseDeal })
                   }
-                  onDelete={(d) => setConfirmDelete(d as PurchaseDeal)}
+                  onDelete={(d) => setModalState({ type: "delete", deal: d as PurchaseDeal })}
                 />
               </div>
             </Grid>
@@ -149,15 +148,15 @@ export default function PurchasePage() {
       </Dialog>
 
       {/* ── Delete confirm dialog ── */}
-      <Dialog open={!!confirmDelete} onClose={() => setConfirmDelete(null)} maxWidth="xs" fullWidth>
+      <Dialog open={modalState.type === 'delete'} onClose={close} maxWidth="xs" fullWidth>
         <DialogTitle>Delete Deal</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            {`Delete "${confirmDelete?.name || `${confirmDelete?.carYear} ${confirmDelete?.carMake} ${confirmDelete?.carModel}`}"? This cannot be undone.`}
+            {`Delete "${modalState.deal?.name || `${modalState.deal?.carYear} ${modalState.deal?.carMake} ${modalState.deal?.carModel}`}"? This cannot be undone.`}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmDelete(null)}>Cancel</Button>
+          <Button onClick={close} color="info">Cancel</Button>
           <Button onClick={confirmDeleteDeal} color="error" variant="contained">Delete</Button>
         </DialogActions>
       </Dialog>

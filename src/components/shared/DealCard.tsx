@@ -73,7 +73,10 @@ export default function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
           <Box sx={{ color: "text.disabled" }}>
             <IconButton
               color="inherit"
-              onClick={() => onEdit(deal)}
+              onClick={(e) => {
+                onEdit(deal);
+                e.stopPropagation();
+              }}
               sx={(th) => ({
                 "&:hover": {
                   color: th.palette.primary.main,
@@ -84,7 +87,10 @@ export default function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
             </IconButton>
             <IconButton
               color="inherit"
-              onClick={() => onDelete(deal)}
+              onClick={(e) => {
+                onDelete(deal);
+                e.stopPropagation();
+              }}
               sx={(th) => ({
                 "&:hover": {
                   color: th.palette.error.main,
