@@ -23,7 +23,7 @@ import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 
-import { DealTypeBadge } from "./UI";
+import { DealTypeBadge } from "@/components/shared/DealBadge";
 
 interface DealCardProps {
   deal: Deal;
@@ -99,9 +99,9 @@ export default function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
 
       <CardContent sx={{ pb: 0 }}>
         <Grid container spacing={1}>
-          <StatTile title="Monthly" val={formatCurrency(monthly)} color="success" />
-          <StatTile title="Total" val={formatCurrency(total)} />
-          <StatTile title="Effective" val={formatCurrency(effectivePayment)} />
+          <GridItem title="Monthly" val={formatCurrency(monthly)} color="success" />
+          <GridItem title="Total" val={formatCurrency(total)} />
+          <GridItem title="Effective" val={formatCurrency(effectivePayment)} />
         </Grid>
       </CardContent>
 
@@ -137,7 +137,7 @@ export default function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
   );
 }
 
-const StatTile = ({ title, val, color = 'textDefault' }: { title: string, val: string, color?: string }) => {
+const GridItem = ({ title, val, color = 'textDefault' }: { title: string, val: string, color?: string }) => {
   return (
     <Grid size={4} className="stat-tile">
       <Typography component="span" color="textDisabled" variant="body2">{title}</Typography>

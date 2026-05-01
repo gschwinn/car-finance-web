@@ -1,11 +1,12 @@
 import { Pencil } from 'lucide-react'
 import type { Deal } from '../../types'
-import { StatTile, DealTypeBadge } from './UI'
+import { StatTile } from './UI'
+import { DealTypeBadge } from "@/components/shared/DealBadge";
 import {
   formatCurrency,
   dealMonthly, dealTermMonths, dealTotal, dealDisplayName, dealSummaryRows,
   purchaseTotalInterest,
-} from '../../utils/calculations'
+} from '@/utils/calculations'
 
 interface DealDetailProps {
   deal: Deal

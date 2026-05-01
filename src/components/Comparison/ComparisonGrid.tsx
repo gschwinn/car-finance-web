@@ -4,7 +4,7 @@ import {
   formatCurrency, bestIndex,
   dealMonthly, dealTotal, dealEffectiveMonthly, dealTermMonths, dealDisplayName, dealSummaryRows,
 } from '../../utils/calculations'
-import { DealTypeBadge } from '../shared/UI'
+import { DealTypeBadge } from "@/components/shared/DealBadge";
 
 function allLabels(deals: Deal[]): string[] {
   const seen = new Set<string>()

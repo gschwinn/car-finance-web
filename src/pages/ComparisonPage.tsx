@@ -2,18 +2,22 @@ import type { Deal } from '@/types'
 import { useState } from 'react'
 
 import Box from "@mui/material/Box";
-import Button from "@mui/material/Button";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import IconButton from "@mui/material/IconButton";
+import CloseIcon from "@mui/icons-material/Close";
 import TuneOutlinedIcon from '@mui/icons-material/TuneOutlined';
 import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 
 import { useDeals } from '@/context/DealsContext'
 import { Layout } from '@/components/layout/layout'
 import { PageHeader } from '@/components/layout/page-header'
+import { Button } from '@/components/shared/Button';
 import ComparisonPicker from '@/components/Comparison/ComparisonPicker'
 import ComparisonGrid   from '@/components/Comparison/ComparisonGrid'
 import ExportPanel      from '@/components/Export/ExportPanel'
 
-import { Modal } from '@/components/shared/UI'
 import { dealDisplayName } from '@/utils/calculations'
 
 import { EmptyCard } from "@/components/shared/EmptyCard";
@@ -45,6 +49,8 @@ export default function ComparisonPage() {
           <Box sx={{ display: 'flex', flexDirection: 'row' }}>
             {validSelected.length >= 2 && (
               <Button
+                sx={{ mr: 1 }}
+                color="secondary"
                 variant="contained"
                 startIcon={<ShareOutlinedIcon />}
                 onClick={() => setShowExport(true)} 
@@ -53,6 +59,7 @@ export default function ComparisonPage() {
               </Button>
             )}
             <Button
+              color="primary"
               variant="contained"
               startIcon={<TuneOutlinedIcon sx={{ fontSize: '12px'}} />}
               onClick={() => setShowPicker(true)}
@@ -81,6 +88,7 @@ export default function ComparisonPage() {
           }
           action={
             <Button
+              color="primary"
               variant="contained"
               startIcon={<TuneOutlinedIcon sx={{ fontSize: '12px'}} />}
               onClick={() => setShowPicker(true)}
@@ -93,19 +101,35 @@ export default function ComparisonPage() {
         <ComparisonGrid deals={validSelected} />
       )}
 
-      {/* ── Picker modal ── */}
-      <Modal isOpen={showPicker} onClose={() => setShowPicker(false)} title="Select Deals to Compare" size="md">
-        <ComparisonPicker
-          selected={validSelected}
-          onChange={setSelected}
-          onClose={() => setShowPicker(false)}
-        />
-      </Modal>
+      {/* ── Picker dialog ── */}
+      <Dialog open={showPicker} onClose={() => setShowPicker(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Select Deals to Compare
+          <IconButton onClick={() => setShowPicker(false)} size="small" aria-label="close">
+            <CloseIcon sx={{ fontSize: 'large', color: 'text.secondary' }} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <ComparisonPicker
+            selected={validSelected}
+            onChange={setSelected}
+            onClose={() => setShowPicker(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
-      {/* ── Export modal ── */}
-      <Modal isOpen={showExport} onClose={() => setShowExport(false)} title="Export Comparison" size="md">
-        <ExportPanel deals={validSelected} />
-      </Modal>
+      {/* ── Export dialog ── */}
+      <Dialog open={showExport} onClose={() => setShowExport(false)} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          Export Comparison
+          <IconButton onClick={() => setShowExport(false)} size="small" aria-label="close">
+            <CloseIcon sx={{ fontSize: 'large', color: 'text.secondary' }} />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers>
+          <ExportPanel deals={validSelected} />
+        </DialogContent>
+      </Dialog>
     </Layout>
   )
 }
