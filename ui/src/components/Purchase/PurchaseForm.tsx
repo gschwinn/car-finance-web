@@ -282,6 +282,43 @@ export default function PurchaseForm({
             }}
           />
         </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Dealer Fees"
+            type="number"
+            value={form.dealerFees || ""}
+            size="small"
+            fullWidth
+            onChange={(e) => set("dealerFees", num(e.target.value))}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+          />
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Govt Fees"
+            type="number"
+            value={form.govtFees || ""}
+            size="small"
+            fullWidth
+            onChange={(e) => set("govtFees", num(e.target.value))}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+          />
+        </Grid>
+
       </Grid>
 
       {/* ── Loan terms ── */}
@@ -336,6 +373,7 @@ export default function PurchaseForm({
             }}
           />
         </Grid>
+        
       </Grid>
 
       {/* ── Footer ── */}

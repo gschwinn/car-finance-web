@@ -15,6 +15,8 @@ export interface PurchaseDeal {
   interestRate: number
   taxRate: number
   mfrIncentives: number
+  dealerFees: number
+  govtFees: number 
 }
 
 export interface LeaseDeal {
@@ -36,6 +38,8 @@ export interface LeaseDeal {
   downPayment: number
   acquisitionFee: number
   taxRate: number
+  dealerFees: number
+  govtFees: number
 }
 
 export type Deal = PurchaseDeal | LeaseDeal
