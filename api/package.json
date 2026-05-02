@@ -9,9 +9,11 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6"
+    "@types/express": "^5.0.6",
+    "@types/winston": "^2.4.4"
   }
 }
