@@ -3,7 +3,7 @@ import { type ReactNode } from "react";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 
-interface PageHeaderProps {
+export type PageHeaderProps = {
   title: string
   subtitle?: string | null
   action?: ReactNode

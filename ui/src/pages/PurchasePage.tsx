@@ -13,7 +13,6 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDeals } from "@/context/DealsContext";
 import { Layout } from "@/components/layout/layout";
-import { PageHeader } from "@/components/layout/page-header";
 import { Button } from '@/components/shared/Button';
 import DealCard from "@/components/shared/DealCard";
 import DealDetail from "@/components/shared/DealDetail";
@@ -51,26 +50,24 @@ export default function PurchasePage() {
   }
 
   return (
-    <Layout>
-      <PageHeader
-        title="Purchase Deals"
-        subtitle={
-          purchases.length > 0
-            ? `${purchases.length} saved deal${purchases.length !== 1 ? "s" : ""}`
-            : null
-        }
-        action={
-          <Button
-            color="primary"
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setModalState({ type: "new", deal: null })}
-          >
-            New Deal
-          </Button>
-        }
-      />
-
+    <Layout
+      title="Purchase Deals"
+      subtitle={
+        purchases.length > 0
+          ? `${purchases.length} saved deal${purchases.length !== 1 ? "s" : ""}`
+          : null
+      }
+      action={
+        <Button
+          color="primary"
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setModalState({ type: "new", deal: null })}
+        >
+          New Deal
+        </Button>
+      }
+    >
       {purchases.length === 0 ? (
         <EmptyCard
           Icon={NavItems[0].Icon}

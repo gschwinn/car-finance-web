@@ -12,7 +12,6 @@ import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
 
 import { useDeals } from '@/context/DealsContext'
 import { Layout } from '@/components/layout/layout'
-import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/shared/Button';
 import ComparisonPicker from '@/components/Comparison/ComparisonPicker'
 import ComparisonGrid   from '@/components/Comparison/ComparisonGrid'
@@ -37,38 +36,37 @@ export default function ComparisonPage() {
     .map(s => allDeals.find(d => d.id === s.id)!)
 
   return (
-    <Layout>
-      <PageHeader
-        title="Compare Deals"
-        subtitle={
-          validSelected.length > 0
-            ? validSelected.map(dealDisplayName).join(' vs ')
-            : 'Select deals to compare side by side'
-        }
-        action={
-          <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-            {validSelected.length >= 2 && (
-              <Button
-                sx={{ mr: 1 }}
-                color="info"
-                variant="contained"
-                startIcon={<ShareOutlinedIcon />}
-                onClick={() => setShowExport(true)} 
-              >
-                Export
-              </Button>
-            )}
+    <Layout
+      title="Compare Deals"
+      subtitle={
+        validSelected.length > 0
+          ? validSelected.map(dealDisplayName).join(' vs ')
+          : 'Select deals to compare side by side'
+      }
+      action={
+        <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+          {validSelected.length >= 2 && (
             <Button
-              color="primary"
+              sx={{ mr: 1 }}
+              color="info"
               variant="contained"
-              startIcon={<TuneOutlinedIcon sx={{ fontSize: '12px'}} />}
-              onClick={() => setShowPicker(true)}
+              startIcon={<ShareOutlinedIcon />}
+              onClick={() => setShowExport(true)} 
             >
-              {validSelected.length === 0 ? 'Select Deals' : 'Change'}
+              Export
             </Button>
-          </Box>
-        }
-      />
+          )}
+          <Button
+            color="primary"
+            variant="contained"
+            startIcon={<TuneOutlinedIcon sx={{ fontSize: '12px'}} />}
+            onClick={() => setShowPicker(true)}
+          >
+            {validSelected.length === 0 ? 'Select Deals' : 'Change'}
+          </Button>
+        </Box>
+      }
+    >
 
       {/* ── Main content ── */}
       {!hasDeals ? (

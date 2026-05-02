@@ -13,7 +13,6 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useDeals } from '@/context/DealsContext'
 import { Layout } from '@/components/layout/layout'
-import { PageHeader } from '@/components/layout/page-header'
 import { Button } from '@/components/shared/Button';
 import DealCard   from '@/components/shared/DealCard'
 import DealDetail from '@/components/shared/DealDetail'
@@ -48,21 +47,20 @@ export default function LeasePage() {
   }
 
   return (
-    <Layout>
-      <PageHeader
-        title="Lease Deals"
-        subtitle={leases.length > 0 ? `${leases.length} saved deal${leases.length !== 1 ? 's' : ''}` : null}
-        action={
-          <Button
-            color="primary"
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => setModalState({ type: "new", deal: null })}
-          >
-            New Deal
-          </Button>
-        }
-      />
+    <Layout
+      title="Lease Deals"
+      subtitle={leases.length > 0 ? `${leases.length} saved deal${leases.length !== 1 ? 's' : ''}` : null}
+      action={
+        <Button
+          color="primary"
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setModalState({ type: "new", deal: null })}
+        >
+          New Deal
+        </Button>
+      }
+    >
 
       {leases.length === 0 ? (
         <EmptyCard

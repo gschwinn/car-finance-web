@@ -1,4 +1,6 @@
-import { NavLink } from "react-router-dom";
+import { NavLink as RouterNavLink } from "react-router-dom";
+import Link from "@mui/material/Link";
+import { alpha } from '@mui/material/styles';
 
 import Box from "@mui/material/Box";
 
@@ -11,24 +13,31 @@ export const MobileFooter = () => {
       sx={{
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-around",
-        padding: "24px 16px",
       }}
     >
       {NavItems.map(({ to, label, Icon }) => (
-        <NavLink
+        <Link
           key={to}
           to={to}
           end={to === "/"}
-          className={({ isActive }) =>
-            `nav-tab flex-1 ${isActive ? "nav-tab-active" : "nav-tab-inactive"}`
-          }
+          component={RouterNavLink}
+          sx={(th) => ({
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            flex: 1,
+            gap: 1,
+            py: 2,
+            color: "text.disabled",
+            "&.active": {
+              color: th.palette.primary.main,
+              backgroundColor: alpha(th.palette.primary.main, 0.1),
+            },
+          })}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Icon />
-            {label}
-          </Box>
-        </NavLink>
+          <Icon />
+          {label}
+        </Link>
       ))}
     </Box>
   );
