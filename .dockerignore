@@ -3,6 +3,8 @@ ui/node_modules
 api/node_modules
 ui/dist
 api/dist
+infra/cdk.out
 .git
 .omc
+.claude
 .vscode

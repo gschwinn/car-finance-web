@@ -4,6 +4,7 @@ import { handleMcpRequest } from './mcp.js'
 
 const port = process.env.PORT ?? 3000
 const uiDir = process.env.UI_DIST_DIR ?? './ui/dist'
+const stackVersion = process.env.STACK_VERSION ?? process.env.npm_package_version ?? 'unknown'
 const uiDist = path.resolve(__dirname, uiDir)
 
 const app = express()
@@ -12,6 +13,10 @@ app.disable('x-powered-by')
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' })
+})
+
+app.get('/api/version', (_req, res) => {
+  res.json({ version: stackVersion })
 })
 
 app.post('/api/mcp', handleMcpRequest)
