@@ -1,0 +1,23 @@
+{
+  "name": "carfinance-infra",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy",
+    "diff": "cdk diff",
+    "destroy": "cdk destroy"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.200.0",
+    "constructs": "^10.0.0"
+  },
+  "devDependencies": {
+    "aws-cdk": "^2.200.0",
+    "ts-node": "^10.9.0",
+    "vitest": "^3.0.0",
+    "typescript": "^5.0.0"
+  }
+}

@@ -1,17 +1,28 @@
 import express from 'express'
 import path from 'path'
 import { handleMcpRequest } from './mcp.js'
+import logger from './logger.js'
 
 const port = process.env.PORT ?? 3000
 const uiDir = process.env.UI_DIST_DIR ?? './ui/dist'
+const stackVersion = process.env.STACK_VERSION ?? process.env.npm_package_version ?? 'unknown'
 const uiDist = path.resolve(__dirname, uiDir)
 
 const app = express()
 app.use(express.json())
 app.disable('x-powered-by')
 
+app.use((req, _res, next) => {
+  logger.info('request', { method: req.method, path: req.path, body: req.body })
+  next()
+})
+
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' })
+})
+
+app.get('/api/version', (_req, res) => {
+  res.json({ version: stackVersion })
 })
 
 app.post('/api/mcp', handleMcpRequest)

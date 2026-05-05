@@ -2,7 +2,7 @@
   "name": "carfinance-web",
   "private": true,
   "version": "1.0.0",
-  "workspaces": ["ui", "api"],
+  "workspaces": ["ui", "api", "infra"],
   "scripts": {
     "dev": "npm run dev -w ui",
     "build": "npm run build -w ui",
@@ -11,7 +11,11 @@
     "build:api": "npm run build -w api",
     "start:api": "npm run start -w api",
     "build:docker": "docker build -f api/Dockerfile -t carfinance-api .",
-    "start:docker": "docker run -p 3000:3000 carfinance-api"
+    "start:docker": "docker run -p 3000:3000 carfinance-api",
+    "infra:synth": "npm run synth -w infra",
+    "infra:deploy": "npm run deploy -w infra",
+    "infra:diff": "npm run diff -w infra",
+    "infra:destroy": "npm run destroy -w infra"
   },
   "devDependencies": {
     "@types/node": "^25.6.0",
