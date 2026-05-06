@@ -27,9 +27,17 @@ import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined
 import AccessTimeOutlinedIcon from "@mui/icons-material/AccessTimeOutlined";
 import TrendingDownOutlinedIcon from "@mui/icons-material/TrendingDownOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 
 import { DealQualityBadge } from "@/components/shared/DealQualityBadge";
 import Stack from "@mui/material/Stack";
+import CircularProgress from "@mui/material/CircularProgress";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
+import Alert from "@mui/material/Alert";
 
 interface DealCardProps {
   deal: Deal;
@@ -164,6 +172,31 @@ export default function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
   const effectivePayment = dealEffectiveMonthly(deal);
   const name = dealDisplayName(deal);
 
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<string | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
+  const handleAnalyze = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAnalyzing(true);
+    setAnalysisResult(null);
+    setAnalysisError(null);
+    try {
+      const resp = await fetch("/api/agent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(deal),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error ?? "Analysis failed");
+      setAnalysisResult(data.text);
+    } catch (err) {
+      setAnalysisError(err instanceof Error ? err.message : "Analysis failed");
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
   return (
     <Card
       variant="outlined"
@@ -206,6 +239,21 @@ export default function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
           <Box sx={{ color: "text.disabled" }}>
             <IconButton
               color="inherit"
+              disabled={analyzing}
+              onClick={handleAnalyze}
+              aria-label="Analyze deal"
+              sx={(th) => ({
+                "&:hover": { color: th.palette.secondary.main },
+              })}
+            >
+              {analyzing ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <AutoAwesomeOutlinedIcon sx={{ fontSize: "20px" }} />
+              )}
+            </IconButton>
+            <IconButton
+              color="inherit"
               onClick={(e) => {
                 onEdit(deal);
                 e.stopPropagation();
@@ -244,6 +292,29 @@ export default function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
           <GridItem deal={deal} stat="effective" title="Effective" val={formatCurrency(effectivePayment)} />
         </Grid>
       </CardContent>
+
+      <Dialog
+        open={analysisResult !== null || analysisError !== null}
+        onClose={(e) => { (e as React.SyntheticEvent).stopPropagation?.(); setAnalysisResult(null); setAnalysisError(null); }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Deal Analysis — {name}</DialogTitle>
+        <DialogContent>
+          {analysisError ? (
+            <Alert severity="error">{analysisError}</Alert>
+          ) : (
+            <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+              {analysisResult}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={(e) => { e.stopPropagation(); setAnalysisResult(null); setAnalysisError(null); }}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <CardActions>
         <Box

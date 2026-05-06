@@ -8,11 +8,13 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY ui/package.json ./ui/
 COPY api/package.json ./api/
+COPY common/package.json ./common/
 
 RUN npm ci
 
 COPY ui/ ./ui/
 COPY api/ ./api/
+COPY common/ ./common/
 
 RUN npm run build && npm run build:api
 
@@ -24,6 +26,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY ui/package.json ./ui/
 COPY api/package.json ./api/
+COPY common/package.json ./common/
 
 RUN npm ci --omit=dev
 

@@ -1,6 +1,7 @@
 import express from 'express'
 import path from 'path'
 import { handleMcpRequest } from './mcp.js'
+import { handleAgentRequest } from './agent.js'
 import logger from './logger.js'
 
 const port = process.env.PORT ?? 3000
@@ -26,6 +27,7 @@ app.get('/api/version', (_req, res) => {
 })
 
 app.post('/api/mcp', handleMcpRequest)
+app.post('/api/agent', handleAgentRequest)
 
 app.use(express.static(uiDist))
 
