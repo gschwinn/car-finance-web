@@ -39,7 +39,7 @@ export default function DealDetail({ deal, onEdit, onAnalyze, analyzing }: DealD
     : { label: 'Effective Pmt',  value: formatCurrency(effectivePayment),            color: 'secondary.main' }
 
   return (
-    <Stack spacing={2.5} sx={{ p: 2.5 }}>
+    <Stack spacing={2.5}>
 
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
         <Box>
