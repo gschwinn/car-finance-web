@@ -78,10 +78,12 @@ export const Layout = ({
             overflowY: "auto",
           }}
         >
-          {showHeader && (
-            <PageHeader title={title} subtitle={subtitle} action={action} />
-          )}
-          <Box sx={{ maxWidth: "1024px", mx: "auto" }}>{children}</Box>
+          <Box sx={{ maxWidth: "1024px", mx: "auto" }}>
+            {showHeader && (
+              <PageHeader title={title} subtitle={subtitle} action={action} />
+            )}
+            <Box>{children}</Box>
+          </Box>
         </Box>
       </Box>
       <Box

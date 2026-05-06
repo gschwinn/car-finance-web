@@ -1,4 +1,5 @@
 import type { Deal } from '../../types'
+import { MarkdownContent } from '@/components/shared/MarkdownContent'
 
 import Box from "@mui/material/Box";
 import Chip from "@mui/material/Chip";
@@ -8,9 +9,11 @@ import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 
 import { StatTile } from '@/components/shared/StatTile'
 import { Button } from '@/components/shared/Button';
+import CircularProgress from "@mui/material/CircularProgress";
 import {
   formatCurrency,
   dealMonthly, dealTermMonths, dealTotal, dealDisplayName, dealSummaryRows,
@@ -20,9 +23,11 @@ import {
 interface DealDetailProps {
   deal: Deal
   onEdit: () => void
+  onAnalyze?: () => void
+  analyzing?: boolean
 }
 
-export default function DealDetail({ deal, onEdit }: DealDetailProps) {
+export default function DealDetail({ deal, onEdit, onAnalyze, analyzing }: DealDetailProps) {
   const monthly          = dealMonthly(deal)
   const total            = dealTotal(deal)
   const rows             = dealSummaryRows(deal)
@@ -34,7 +39,7 @@ export default function DealDetail({ deal, onEdit }: DealDetailProps) {
     : { label: 'Effective Pmt',  value: formatCurrency(effectivePayment),            color: 'secondary.main' }
 
   return (
-    <Stack spacing={2.5} sx={{ p: 2.5 }}>
+    <Stack spacing={2.5}>
 
       <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
         <Box>
@@ -52,9 +57,22 @@ export default function DealDetail({ deal, onEdit }: DealDetailProps) {
             <Typography variant="body2" color="text.disabled" sx={{ mt: 0.25 }}>{deal.trimLevel}</Typography>
           )}
         </Box>
-        <Button color="info" onClick={onEdit} variant="outlined" startIcon={<EditOutlinedIcon />}>
-          Edit
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {onAnalyze && (
+            <Button
+              color="secondary"
+              variant="outlined"
+              disabled={analyzing}
+              startIcon={analyzing ? <CircularProgress size={16} color="inherit" /> : <AutoAwesomeOutlinedIcon />}
+              onClick={onAnalyze}
+            >
+              {analyzing ? 'Analyzing…' : 'Analyze'}
+            </Button>
+          )}
+          <Button color="info" onClick={onEdit} variant="outlined" startIcon={<EditOutlinedIcon />}>
+            Edit
+          </Button>
+        </Box>
       </Box>
 
       {/* ── Key stats ── */}
@@ -76,6 +94,13 @@ export default function DealDetail({ deal, onEdit }: DealDetailProps) {
           </Box>
         ))}
       </Paper>
+
+      {deal.notes && (
+        <Paper variant="outlined" sx={{ p: 2 }}>
+          <Typography variant="overline" color="text.disabled" sx={{ display: 'block', mb: 1 }}>Notes</Typography>
+          <MarkdownContent>{deal.notes}</MarkdownContent>
+        </Paper>
+      )}
 
       <Typography variant="caption" color="text.disabled" align="center" component="p">
         Saved {new Date(deal.createdAt!).toLocaleDateString('en-US', {

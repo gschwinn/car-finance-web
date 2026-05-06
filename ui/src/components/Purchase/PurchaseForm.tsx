@@ -12,6 +12,7 @@ import ToggleButtonGroup from "@mui/material/ToggleButtonGroup";
 import Typography from "@mui/material/Typography";
 
 import { Button } from "../shared/Button";
+import { NotesField } from "@/components/shared/NotesField";
 import { StatTile } from "@/components/shared/StatTile";
 import {
   purchaseMonthlyPayment,
@@ -375,6 +376,9 @@ export default function PurchaseForm({
         </Grid>
         
       </Grid>
+
+      {/* ── Notes ── */}
+      <NotesField value={form.notes ?? ''} onChange={(v) => set('notes', v)} />
 
       {/* ── Footer ── */}
       <Box

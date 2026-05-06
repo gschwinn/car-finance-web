@@ -22,6 +22,7 @@ import {
 import { defaultLease, LEASE_TERMS, MILEAGE_OPTS } from "@/utils/defaults";
 import { StatTile } from "@/components/shared/StatTile";
 import { Button } from "../shared/Button";
+import { NotesField } from "@/components/shared/NotesField";
 
 interface LeaseFormProps {
   initial: Partial<LeaseDeal>;
@@ -423,6 +424,9 @@ export default function LeaseForm({
           />
         </Grid>    
       </Grid>
+
+      {/* ── Notes ── */}
+      <NotesField value={form.notes ?? ''} onChange={(v) => set('notes', v)} />
 
       {/* ── Footer ── */}
       <Box

@@ -1,5 +1,6 @@
 import type { PurchaseDeal } from "@/types";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -15,13 +16,12 @@ import { useDeals } from "@/context/DealsContext";
 import { Layout } from "@/components/layout/layout";
 import { Button } from '@/components/shared/Button';
 import DealCard from "@/components/shared/DealCard";
-import DealDetail from "@/components/shared/DealDetail";
 import PurchaseForm from "@/components/Purchase/PurchaseForm";
 
 import { EmptyCard } from "@/components/shared/EmptyCard";
 import { NavItems } from "@/components/layout/nav";
 
-type ModalType = "new" | "edit" | "detail" | "delete" | null;
+type ModalType = "new" | "edit" | "delete" | null;
 
 interface ModalState {
   type: ModalType;
@@ -30,6 +30,7 @@ interface ModalState {
 
 export default function PurchasePage() {
   const { purchases, addPurchase, updatePurchase, deletePurchase } = useDeals();
+  const navigate = useNavigate();
 
   const [modalState, setModalState] = useState<ModalState>({
     type: null,
@@ -88,12 +89,10 @@ export default function PurchasePage() {
         <Grid container spacing={1}>
           {purchases.map((deal) => (
             <Grid key={deal.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-              <div onClick={() => setModalState({ type: 'detail', deal })} style={{ cursor: 'pointer' }}>
+              <div onClick={() => navigate(`/deal/${deal.id}`)} style={{ cursor: 'pointer' }}>
                 <DealCard
                   deal={deal}
-                  onEdit={(d) =>
-                    setModalState({ type: "edit", deal: d as PurchaseDeal })
-                  }
+                  onEdit={(d) => setModalState({ type: "edit", deal: d as PurchaseDeal })}
                   onDelete={(d) => setModalState({ type: "delete", deal: d as PurchaseDeal })}
                 />
               </div>
@@ -121,26 +120,6 @@ export default function PurchasePage() {
             onSave={handleSave}
             onCancel={close}
           />
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Detail dialog ── */}
-      <Dialog open={modalState.type === "detail"} onClose={close} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          Deal Detail
-          <IconButton onClick={close} size="small" aria-label="close">
-            <CloseIcon sx={{ fontSize: 'large', color: 'text.secondary' }} />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent dividers>
-          {modalState.deal && (
-            <DealDetail
-              deal={modalState.deal}
-              onEdit={() =>
-                setModalState({ type: "edit", deal: modalState.deal })
-              }
-            />
-          )}
         </DialogContent>
       </Dialog>
 
