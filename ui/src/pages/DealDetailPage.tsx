@@ -217,17 +217,9 @@ function AnalysisPanel({
           {analyzing ? "Analyzing..." : "Analysis"}
         </Typography>
         {revision?.followUps && (
-          <IconButton onClick={() => setFollowUpsOpen(!followUpsOpen)}>
-            <TaxiAlertIcon color="warning" />
-          </IconButton>
+          <TaxiAlertIcon color="warning" />
         )}
       </Box>
-      {followUpsOpen && (
-        <>
-          <Divider sx={{ mb: 1.5 }} />
-          <MarkdownContent>{followUpMD}</MarkdownContent>
-        </>
-      )}
       <Divider sx={{ mb: 1.5 }} />
       {analyzing && (
         <Box sx={{ textAlign: "center" }}>
@@ -235,7 +227,11 @@ function AnalysisPanel({
         </Box>
       )}
       {!analyzing && (
-        <MarkdownContent>{revision?.analysis ?? ""}</MarkdownContent>
+        <>
+          <MarkdownContent>{followUpMD}</MarkdownContent>
+          <Divider sx={{ mb: 1.5 }} />
+          <MarkdownContent>{revision?.analysis ?? ""}</MarkdownContent>
+        </>
       )}
     </Paper>
   );

@@ -212,19 +212,14 @@ export default function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
                     size="small"color={deal.type === 'purchase' ? 'primary' : 'success'}
                     variant="outlined" 
                   />
-                  <DealQualityBadge deal={deal} showRatio />  
+                  <DealQualityBadge deal={deal} showRatio />
               </Stack>
               
-              {deal.carYear && (
-                <Typography component="span" variant="body2" sx={{ ml: 1 }}>
-                  {deal.carYear}
-                </Typography>
-              )}
             </Box>
             <Typography variant="h6">{name}</Typography>
             {deal.trimLevel && (
               <Typography component="p" color="textDisabled" variant="body2">
-                {deal.carModel}-{deal.trimLevel}
+                {deal.carYear} {deal.carMake} {deal.carModel} {deal.trimLevel}
               </Typography>
             )}
           </Box>

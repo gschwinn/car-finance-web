@@ -19,6 +19,7 @@ import {
   dealMonthly, dealTermMonths, dealTotal, dealDisplayName, dealSummaryRows,
   purchaseTotalInterest,
 } from '@/utils/calculations'
+import { DealQualityBadge } from './DealQualityBadge';
 
 interface DealDetailProps {
   deal: Deal
@@ -49,6 +50,7 @@ export default function DealDetail({ deal }: DealDetailProps) {
             color={deal.type === 'purchase' ? 'primary' : 'success'}
             variant="outlined"
           />
+          <DealQualityBadge deal={deal} showRatio />
         </Box>
       </Box>
 
