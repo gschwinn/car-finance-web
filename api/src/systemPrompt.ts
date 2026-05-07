@@ -9,7 +9,8 @@ You should protect the buyer along the following lines:
  - RV and MF are disclosed
  - lease is truly zero down (no cap reduction) and taxes, tags and fees are all disclosed
 
-The deal structure will look like this typescript type:
+You will be given a JSON structure representing the deal, it will adhere to this typescript type:
+
 ${codeDelimiter}
 export interface LeaseDeal {
   id: string | null
@@ -48,5 +49,7 @@ type FollowUp = {
   fieldName?: string; // the fieldName the follow up applies to (if applicable)
 }
 ${codeDelimiter}
+
+In your markdown analysis, please include an overview/summary at the very beginning followed by detailed analysis
 
 `;

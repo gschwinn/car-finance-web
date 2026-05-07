@@ -25,8 +25,7 @@ export function useAnalyzeDeal(
       });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error ?? "Analysis failed");
-      const analysis: AnalysisResponse = await JSON.parse(data.text);
-      onSuccess(analysis);
+      onSuccess(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Analysis failed");
     } finally {
