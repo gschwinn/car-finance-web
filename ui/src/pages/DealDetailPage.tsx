@@ -194,14 +194,6 @@ function AnalysisPanel({
   revision?: DealRevision;
   analyzing?: boolean;
 }) {
-  const [followUpsOpen, setFollowUpsOpen] = useState(false);
-
-  let followUpMD = "### Follow Ups:\n";
-  if (revision?.followUps) {
-    revision.followUps.map((fu) => {
-      followUpMD += `1. ${fu.instructions} ${fu.fieldName ? `(${fu.fieldName})` : ""}\n`;
-    });
-  }
 
   return (
     <Paper variant="outlined" sx={{ p: 2.5 }}>
@@ -228,8 +220,6 @@ function AnalysisPanel({
       )}
       {!analyzing && (
         <>
-          <MarkdownContent>{followUpMD}</MarkdownContent>
-          <Divider sx={{ mb: 1.5 }} />
           <MarkdownContent>{revision?.analysis ?? ""}</MarkdownContent>
         </>
       )}
