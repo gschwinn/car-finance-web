@@ -19,6 +19,7 @@ export const defaultPurchase = (): PurchaseDeal => ({
   mfrIncentives:   0,
   dealerFees:      0,
   govtFees:        0,
+  revisions:       [],
 })
 
 export const defaultLease = (): LeaseDeal => ({
@@ -42,6 +43,7 @@ export const defaultLease = (): LeaseDeal => ({
   taxRate:                 0,
   dealerFees:              0,
   govtFees:                0,
+  revisions:               [],
 })
 
 export const LOAN_TERMS:   number[] = [24, 36, 48, 60, 72, 84]
