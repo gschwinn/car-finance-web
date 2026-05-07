@@ -1,4 +1,4 @@
-import type { PurchaseDeal, LeaseDeal, DealRevision } from "@/types";
+import type { PurchaseDeal, LeaseDeal, DealRevision, Deal } from "@/types";
 import { useState } from "react";
 import { useAnalyzeDeal } from "@/hooks/useAnalyzeDeal";
 import { useParams, useNavigate } from "react-router-dom";
@@ -16,9 +16,10 @@ import IconButton from "@mui/material/IconButton";
 import Paper from "@mui/material/Paper";
 import Typography from "@mui/material/Typography";
 
-import ArrowBackOutlinedIcon from "@mui/icons-material/ArrowBackOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import TaxiAlertIcon from "@mui/icons-material/TaxiAlert";
+import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 
 import { useDeals } from "@/context/DealsContext";
 import { Layout } from "@/components/layout/layout";
@@ -26,7 +27,6 @@ import { Button } from "@/components/shared/Button";
 import DealDetail from "@/components/shared/DealDetail";
 import PurchaseForm from "@/components/Purchase/PurchaseForm";
 import LeaseForm from "@/components/Lease/LeaseForm";
-import { dealDisplayName } from "@/utils/calculations";
 
 export default function DealDetailPage() {
   const { dealId } = useParams<{ dealId: string }>();
@@ -73,7 +73,7 @@ export default function DealDetailPage() {
     );
   }
 
-  const backPath = deal.type === "lease" ? "/lease" : "/";
+  const backPath = `/${deal.type}`;
   const revisions = deal.revisions ?? [];
   const latestRevision =
     revisions.length > 0 ? revisions[revisions.length - 1] : undefined;
@@ -84,18 +84,44 @@ export default function DealDetailPage() {
     setEditOpen(false);
   }
 
+  function dealDisplayName(deal: Deal): string {
+    const dealType = deal.type === "purchase" ? "Purchase" : "Lease";
+    const dealName =
+      deal.name?.trim() || `${deal.carYear} ${deal.carMake} ${deal.carModel}`;
+    return `${dealType} Deal: ${dealName}`;
+  }
+
   return (
     <Layout
       title={dealDisplayName(deal)}
+      backPath={backPath}
       action={
-        <Button
-          color="info"
-          variant="outlined"
-          startIcon={<ArrowBackOutlinedIcon />}
-          onClick={() => navigate(backPath)}
-        >
-          Back
-        </Button>
+        <>
+          <Button
+            sx={{ mr: 1 }}
+            color="secondary"
+            variant="outlined"
+            disabled={analyzing}
+            startIcon={
+              analyzing ? (
+                <CircularProgress size={16} color="inherit" />
+              ) : (
+                <AutoAwesomeOutlinedIcon />
+              )
+            }
+            onClick={handleAnalyze}
+          >
+            {analyzing ? "Analyzing…" : "Analyze"}
+          </Button>
+          <Button
+            color="info"
+            onClick={() => setEditOpen(true)}
+            variant="outlined"
+            startIcon={<EditOutlinedIcon />}
+          >
+            Edit
+          </Button>
+        </>
       }
     >
       {analysisError && (
@@ -108,9 +134,6 @@ export default function DealDetailPage() {
         <Grid size={{ xs: 12, md: latestRevision ? 5 : 12 }}>
           <DealDetail
             deal={deal}
-            onEdit={() => setEditOpen(true)}
-            onAnalyze={handleAnalyze}
-            analyzing={analyzing}
           />
         </Grid>
 
@@ -174,9 +197,11 @@ function AnalysisPanel({
   const [followUpsOpen, setFollowUpsOpen] = useState(false);
 
   let followUpMD = "### Follow Ups:\n";
-  revision?.followUps.map((fu) => {
-    followUpMD += `1. ${fu.instructions} ${fu.fieldName ? `(${fu.fieldName})` : ""}\n`;
-  });
+  if (revision?.followUps) {
+    revision.followUps.map((fu) => {
+      followUpMD += `1. ${fu.instructions} ${fu.fieldName ? `(${fu.fieldName})` : ""}\n`;
+    });
+  }
 
   return (
     <Paper variant="outlined" sx={{ p: 2.5 }}>
@@ -189,7 +214,7 @@ function AnalysisPanel({
         }}
       >
         <Typography variant="h5">
-          {analyzing ? "Analyzing Deal..." : "Deal Analysis"}
+          {analyzing ? "Analyzing..." : "Analysis"}
         </Typography>
         {revision?.followUps && (
           <IconButton onClick={() => setFollowUpsOpen(!followUpsOpen)}>
