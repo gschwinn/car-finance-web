@@ -14,7 +14,7 @@ app.use(express.json())
 app.disable('x-powered-by')
 
 app.use((req, _res, next) => {
-  logger.info('request', { method: req.method, path: req.path, body: req.body })
+  logger.debug('request', { method: req.method, path: req.path, body: req.body })
   next()
 })
 
