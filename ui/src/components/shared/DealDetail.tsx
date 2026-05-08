@@ -8,15 +8,11 @@ import Grid from "@mui/material/Grid";
 import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
 
 import { StatTile } from '@/components/shared/StatTile'
-import { Button } from '@/components/shared/Button';
-import CircularProgress from "@mui/material/CircularProgress";
 import {
   formatCurrency,
-  dealMonthly, dealTermMonths, dealTotal, dealDisplayName, dealSummaryRows,
+  dealMonthly, dealTermMonths, dealTotal, dealSummaryRows,
   purchaseTotalInterest,
 } from '@/utils/calculations'
 import { DealQualityBadge } from './DealQualityBadge';
@@ -30,9 +26,6 @@ export default function DealDetail({ deal }: DealDetailProps) {
   const total            = dealTotal(deal)
   const rows             = dealSummaryRows(deal)
   const effectivePayment = dealTotal(deal) / dealTermMonths(deal)
-  const revisions = deal.revisions ?? [];
-  const latestRevision =
-    revisions.length > 0 ? revisions[revisions.length - 1] : undefined;
 
   const tile3Props = deal.type === 'purchase'
     ? { label: 'Total Interest', value: formatCurrency(purchaseTotalInterest(deal)), color: 'warning' }
@@ -42,7 +35,7 @@ export default function DealDetail({ deal }: DealDetailProps) {
     <Stack spacing={2.5}>
 
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mx: latestRevision ? 'none' : 'auto' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mx: deal.analysis ? 'none' : 'auto' }}>
           <Typography variant="h6" color="text.disabled">{deal.carYear} {deal.carMake} {deal.carModel}</Typography>
           <Chip
             label={deal.type === 'purchase' ? 'Purchase' : 'Lease'}

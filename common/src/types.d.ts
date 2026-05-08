@@ -1,6 +1,5 @@
-export interface PurchaseDeal {
+export type BaseDeal = {
   id: string | null;
-  type: "purchase";
   name: string;
   createdAt: string | null;
   carMake: string;
@@ -10,47 +9,37 @@ export interface PurchaseDeal {
   msrp: number;
   negotiatedPrice: number;
   downPayment: number;
+  mfrIncentives: number;
+  notes?: string;
+  analysis?: DealAnalysis;
+}
+
+export type PurchaseDeal = {
+  type: "purchase";
   tradeInValue: number;
   loanTermMonths: number;
   interestRate: number;
   taxRate: number;
-  mfrIncentives: number;
   dealerFees: number;
   govtFees: number;
-  notes?: string;
-  revisions: DealRevision[];
-}
+} & BaseDeal;
 
-export interface LeaseDeal {
-  id: string | null;
+export type LeaseDeal = {
   type: "lease";
-  name: string;
-  createdAt: string | null;
-  carMake: string;
-  carModel: string;
-  carYear: number;
-  trimLevel: string;
-  msrp: number;
-  negotiatedPrice: number;
-  mfrIncentives: number;
   residualPercent: number;
   moneyFactor: number;
   leaseTermMonths: number;
   mileageAllowancePerYear: number;
-  downPayment: number;
   acquisitionFee: number;
   taxRate: number;
   dealerFees: number;
   govtFees: number;
-  notes?: string;
-  revisions: DealRevision[];
-}
+} & BaseDeal;
 
 export type Deal = PurchaseDeal | LeaseDeal;
 
-export type DealRevision = {
-  snapshot: Deal;
-  analysis: string;
+export type DealAnalysis = {
+  markdown: string;
   followUps: DealFollowUp[];
 };
 

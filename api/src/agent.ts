@@ -31,9 +31,18 @@ export async function handleAgentRequest(req: Request, res: Response) {
     model: openai(MODEL),
     instructions: systemPrompt,
     tools: {
-      // tools will be registered here
+      webSearch: openai.tools.webSearchPreview({}),
     },
     stopWhen: stepCountIs(10),
+    onFinish: async () => {
+      logger.debug('agent finished');
+    },
+    prepareStep: async (prepare: unknown) => {
+      logger.debug('agent prepare step', { prepare });
+    },
+    onStepFinish: async (step: unknown) => {
+      logger.debug('agent step finished', { step });
+    },
   });
 
   try {
