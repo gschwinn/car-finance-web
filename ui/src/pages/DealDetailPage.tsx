@@ -1,4 +1,4 @@
-import type { PurchaseDeal, LeaseDeal, DealRevision, Deal } from "@/types";
+import type { PurchaseDeal, LeaseDeal, Deal } from "@/types";
 import { useState } from "react";
 import { useAnalyzeDeal } from "@/hooks/useAnalyzeDeal";
 import { useParams, useNavigate } from "react-router-dom";
@@ -41,22 +41,16 @@ export default function DealDetailPage() {
     error: analysisError,
     clearError,
     handleAnalyze,
-  } = useAnalyzeDeal(deal, ({ analysis, followUps }) => {
-    const dealRevisions = deal?.revisions ?? [];
-    const revision: DealRevision = {
-      snapshot: { ...deal!, revisions: [] } as PurchaseDeal | LeaseDeal,
-      analysis,
-      followUps,
-    };
+  } = useAnalyzeDeal(deal, (analysis) => {
     if (deal!.type === "purchase")
       updatePurchase({
         ...deal!,
-        revisions: [...dealRevisions, revision],
+        analysis,
       } as PurchaseDeal);
     else
       updateLease({
         ...deal!,
-        revisions: [...dealRevisions, revision],
+        analysis,
       } as LeaseDeal);
   });
 
@@ -74,9 +68,6 @@ export default function DealDetailPage() {
   }
 
   const backPath = `/${deal.type}`;
-  const revisions = deal.revisions ?? [];
-  const latestRevision =
-    revisions.length > 0 ? revisions[revisions.length - 1] : undefined;
 
   function handleSave(data: PurchaseDeal | LeaseDeal) {
     if (data.type === "purchase") updatePurchase(data as PurchaseDeal);
@@ -131,15 +122,13 @@ export default function DealDetailPage() {
       )}
 
       <Grid container spacing={2} sx={{ alignItems: "flex-start" }}>
-        <Grid size={{ xs: 12, md: latestRevision ? 5 : 12 }}>
-          <DealDetail
-            deal={deal}
-          />
+        <Grid size={{ xs: 12, md: deal.analysis ? 5 : 12 }}>
+          <DealDetail deal={deal} />
         </Grid>
 
-        {(latestRevision || analyzing) && (
+        {(deal.analysis || analyzing) && (
           <Grid size={{ xs: 12, md: 7 }}>
-            <AnalysisPanel revision={latestRevision} analyzing={analyzing} />
+            <AnalysisPanel deal={deal} analyzing={analyzing} />
           </Grid>
         )}
       </Grid>
@@ -188,13 +177,12 @@ export default function DealDetailPage() {
 }
 
 function AnalysisPanel({
-  revision,
+  deal,
   analyzing,
 }: {
-  revision?: DealRevision;
+  deal?: Deal;
   analyzing?: boolean;
 }) {
-
   return (
     <Paper variant="outlined" sx={{ p: 2.5 }}>
       <Box
@@ -208,9 +196,7 @@ function AnalysisPanel({
         <Typography variant="h5">
           {analyzing ? "Analyzing..." : "Analysis"}
         </Typography>
-        {revision?.followUps && (
-          <TaxiAlertIcon color="warning" />
-        )}
+        {deal?.analysis?.followUps && <TaxiAlertIcon color="warning" />}
       </Box>
       <Divider sx={{ mb: 1.5 }} />
       {analyzing && (
@@ -220,7 +206,7 @@ function AnalysisPanel({
       )}
       {!analyzing && (
         <>
-          <MarkdownContent>{revision?.analysis ?? ""}</MarkdownContent>
+          <MarkdownContent>{deal?.analysis?.markdown ?? ""}</MarkdownContent>
         </>
       )}
     </Paper>

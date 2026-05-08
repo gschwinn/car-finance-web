@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAnalyzeDeal } from "@/hooks/useAnalyzeDeal";
 import { useDeals } from "@/context/DealsContext";
-import type { Deal, DealRevision, PurchaseDeal, LeaseDeal } from "@/types";
+import type { Deal, PurchaseDeal, LeaseDeal } from "@/types";
 import Chip from "@mui/material/Chip";
 
 import {
@@ -171,17 +171,12 @@ export default function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
 
   const navigate = useNavigate();
   const { updatePurchase, updateLease } = useDeals();
-  const { analyzing, handleAnalyze: runAnalyze } = useAnalyzeDeal(deal, ({ analysis, followUps }) => {
-    const revision: DealRevision = {
-      snapshot: { ...deal, revisions: [] } as PurchaseDeal | LeaseDeal,
-      analysis,
-      followUps,
-    };
+  const { analyzing, handleAnalyze: runAnalyze } = useAnalyzeDeal(deal, (analysis) => {
     if (deal.type === "purchase") {
-      updatePurchase({ ...deal, revisions: [...(deal.revisions ?? []), revision] } as PurchaseDeal);
+      updatePurchase({ ...deal, analysis } as PurchaseDeal);
       navigate(`/purchase/${deal.id}`);
     } else {
-      updateLease({ ...deal, revisions: [...(deal.revisions ?? []), revision] } as LeaseDeal);
+      updateLease({ ...deal, analysis } as LeaseDeal);
       navigate(`/lease/${deal.id}`);
     }
   });

@@ -1,14 +1,9 @@
 import { useState } from "react";
-import type { Deal, DealFollowUp } from "@/types";
-
-export type AnalysisResponse = {
-  analysis: string;
-  followUps: DealFollowUp[];
-};
+import type { Deal, DealAnalysis } from "@/types";
 
 export function useAnalyzeDeal(
   deal: Deal | undefined,
-  onSuccess: (analysis: AnalysisResponse) => void,
+  onSuccess: (analysis: DealAnalysis) => void,
 ) {
   const [analyzing, setAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -17,11 +12,14 @@ export function useAnalyzeDeal(
     if (!deal) return;
     setAnalyzing(true);
     setError(null);
+
+    const { analysis: _analysis, ...dealRest } = deal;
+
     try {
       const resp = await fetch("/api/agent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(deal),
+        body: JSON.stringify(dealRest),
       });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error ?? "Analysis failed");

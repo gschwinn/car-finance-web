@@ -26,7 +26,6 @@ export interface LeaseDeal {
   dealerFees: number
   govtFees: number
   notes?: string
-  revisions: DealRevision[]
 }
 ${codeDelimiter}
 `;
@@ -35,7 +34,7 @@ const outputDescription = `
 You should provide an analysis in a json format matching the following AnalysisResponse type.  Do not wrap the JSON in markdown.
 ${codeDelimiter}
 type AnalysisResponse = {
-  "analysis": string; // your analysis of the deal in markdown format
+  "markdown": string; // your analysis of the deal in markdown format
   "followUps": FollowUp[]; // follow up actions for the end user to take (verify MF, verify all fees are disclosed, etc)
 }
 type FollowUp = {
