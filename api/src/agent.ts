@@ -20,7 +20,7 @@ export async function handleAgentRequest(req: Request, res: Response) {
   const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o";
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
-    logger.error("OPENAI_APIKEY environment variable is required");
+    logger.error("OPENAI_API_KEY environment variable is required");
     res.status(500).json({ error: "agent request failed" });
     return;
   }
@@ -41,16 +41,22 @@ export async function handleAgentRequest(req: Request, res: Response) {
       logger.debug('agent prepare step', { prepare });
     },
     onStepFinish: async (step: unknown) => {
-      logger.debug('agent step finished', { step });
+      logger.debug('agent step finished');
     },
-  });
+    experimental_onToolCallStart: (toolCall: unknown) => {
+      logger.debug('agent tool call started', { toolCall } );
+    },
+    experimental_onToolCallFinish: (toolCall: unknown) => {
+      logger.debug('agent tool call finished', { toolCall } );
+    },
+  } as any);
 
   try {
     const result = await agent.generate({
       prompt: `Please analyze this ${deal.type} deal:\n${JSON.stringify(deal, null, 2)}`,
     });
 
-    logger.info("agent response", {
+    logger.debug("agent response", {
       dealId: deal.id,
       steps: result.steps.length,
       usage: result.usage,
