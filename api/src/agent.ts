@@ -31,7 +31,7 @@ export async function handleAgentRequest(req: Request, res: Response) {
     model: openai(MODEL),
     instructions: systemPrompt,
     tools: {
-      // tools will be registered here
+      webSearch: openai.tools.webSearchPreview({}),
     },
     stopWhen: stepCountIs(10),
   });
