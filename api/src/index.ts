@@ -36,11 +36,11 @@ app.get('/{*splat}', (_req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`API server listening on port ${port}`)
+  logger.info(`API server listening on port ${port}`)
 })
 
 const stopServer = () => {
-  console.log(`API server shutting down`);
+  logger.info(`API server shutting down`);
   process.exit(0);
 };
 
