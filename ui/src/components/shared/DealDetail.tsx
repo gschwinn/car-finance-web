@@ -19,20 +19,20 @@ import {
   dealMonthly, dealTermMonths, dealTotal, dealDisplayName, dealSummaryRows,
   purchaseTotalInterest,
 } from '@/utils/calculations'
+import { DealQualityBadge } from './DealQualityBadge';
 
 interface DealDetailProps {
   deal: Deal
-  onEdit: () => void
-  onAnalyze?: () => void
-  analyzing?: boolean
 }
 
-export default function DealDetail({ deal, onEdit, onAnalyze, analyzing }: DealDetailProps) {
+export default function DealDetail({ deal }: DealDetailProps) {
   const monthly          = dealMonthly(deal)
   const total            = dealTotal(deal)
   const rows             = dealSummaryRows(deal)
   const effectivePayment = dealTotal(deal) / dealTermMonths(deal)
-  const name             = dealDisplayName(deal)
+  const revisions = deal.revisions ?? [];
+  const latestRevision =
+    revisions.length > 0 ? revisions[revisions.length - 1] : undefined;
 
   const tile3Props = deal.type === 'purchase'
     ? { label: 'Total Interest', value: formatCurrency(purchaseTotalInterest(deal)), color: 'warning' }
@@ -41,37 +41,16 @@ export default function DealDetail({ deal, onEdit, onAnalyze, analyzing }: DealD
   return (
     <Stack spacing={2.5}>
 
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
-        <Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-            <Chip
-              label={deal.type === 'purchase' ? 'Purchase' : 'Lease'}
-              size="small"
-              color={deal.type === 'purchase' ? 'primary' : 'success'}
-              variant="outlined"
-            />
-            <Typography variant="caption" color="text.disabled">{deal.carYear}</Typography>
-          </Box>
-          <Typography variant="h6">{name}</Typography>
-          {deal.trimLevel && (
-            <Typography variant="body2" color="text.disabled" sx={{ mt: 0.25 }}>{deal.trimLevel}</Typography>
-          )}
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          {onAnalyze && (
-            <Button
-              color="secondary"
-              variant="outlined"
-              disabled={analyzing}
-              startIcon={analyzing ? <CircularProgress size={16} color="inherit" /> : <AutoAwesomeOutlinedIcon />}
-              onClick={onAnalyze}
-            >
-              {analyzing ? 'Analyzing…' : 'Analyze'}
-            </Button>
-          )}
-          <Button color="info" onClick={onEdit} variant="outlined" startIcon={<EditOutlinedIcon />}>
-            Edit
-          </Button>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mx: latestRevision ? 'none' : 'auto' }}>
+          <Typography variant="h6" color="text.disabled">{deal.carYear} {deal.carMake} {deal.carModel}</Typography>
+          <Chip
+            label={deal.type === 'purchase' ? 'Purchase' : 'Lease'}
+            size="small"
+            color={deal.type === 'purchase' ? 'primary' : 'success'}
+            variant="outlined"
+          />
+          <DealQualityBadge deal={deal} showRatio />
         </Box>
       </Box>
 

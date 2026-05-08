@@ -22,6 +22,7 @@ export const Layout = ({
   title,
   subtitle,
   action,
+  backPath,
   children,
   showHeader = true,
 }: LayoutProps) => {
@@ -80,7 +81,7 @@ export const Layout = ({
         >
           <Box sx={{ maxWidth: "1024px", mx: "auto" }}>
             {showHeader && (
-              <PageHeader title={title} subtitle={subtitle} action={action} />
+              <PageHeader title={title} subtitle={subtitle} action={action} backPath={backPath} />
             )}
             <Box>{children}</Box>
           </Box>

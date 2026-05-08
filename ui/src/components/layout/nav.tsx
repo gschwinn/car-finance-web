@@ -19,8 +19,8 @@ export interface NavItem {
 }
 
 export const NavItems: NavItem[] = [
-  { to: '/',        label: 'Purchase', Icon: ShoppingCartOutlinedIcon },
   { to: '/lease',   label: 'Lease',    Icon: CalendarTodayOutlinedIcon },
+  { to: '/purchase',        label: 'Purchase', Icon: ShoppingCartOutlinedIcon },
   { to: '/compare', label: 'Compare',  Icon: SyncAltOutlinedIcon },
 ]
 

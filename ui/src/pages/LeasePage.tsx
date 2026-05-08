@@ -65,7 +65,7 @@ export default function LeasePage() {
 
       {leases.length === 0 ? (
         <EmptyCard
-          Icon={NavItems[1].Icon}
+          Icon={NavItems[0].Icon}
           title="No lease deals yet"
           description="Compare offers from different dealers, with different money factors, residuals, and mileage tiers."
           action={
@@ -83,7 +83,7 @@ export default function LeasePage() {
         <Grid container spacing={1}>
           {leases.map(deal => (
             <Grid key={deal.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-              <div onClick={() => navigate(`/deal/${deal.id}`)} style={{ cursor: 'pointer' }}>
+              <div onClick={() => navigate(`/lease/${deal.id}`)} style={{ cursor: 'pointer' }}>
                 <DealCard
                   deal={deal}
                   onEdit={d => setModalState({ type: 'edit', deal: d as LeaseDeal })}
