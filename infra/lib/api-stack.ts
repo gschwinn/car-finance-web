@@ -8,13 +8,17 @@ import {
   CfnOutput,
   Stack,
   StackProps,
+  SecretValue,
+  RemovalPolicy,
   aws_ec2 as ec2,
   aws_ecs as ecs,
-  aws_ecs_patterns as ecs_patterns,
-  aws_ecr_assets as ecr_assets,
   aws_iam as iam,
   aws_logs as logs,
-  RemovalPolicy,
+  aws_cognito as cognito,
+  aws_dynamodb as dynamodb,
+  aws_secretsmanager as secretsmanager,
+  aws_cloudfront as cloudfront,
+  aws_cloudfront_origins as origins,
 } from "aws-cdk-lib";
 
 export class ApiStack extends Stack {
@@ -38,18 +42,6 @@ export class ApiStack extends Stack {
       resources: [logGroup.logGroupArn, `${logGroup.logGroupArn}:*`],
     });
 
-    // const ddbStmt = new iam.PolicyStatement({
-    //   actions: [
-    //     "dynamodb:Query",
-    //     "dynamodb:GetItem",
-    //     "dynamodb:PutItem",
-    //     "dynamodb:UpdateItem",
-    //     "dynamodb:DeleteItem",
-    //   ],
-    //   resources: ["table arn 1"],
-    // });
-
-    // Create VPC with only public subnets
     const vpc = new ec2.Vpc(this, 'CarFinanceVpc', {
       maxAzs: 2,
       subnetConfiguration: [
@@ -77,7 +69,6 @@ export class ApiStack extends Stack {
       ],
     });
 
-    // Build context is the repo root; Dockerfile lives at api/Dockerfile
     const image = new DockerImageAsset(this, "ApiImage", {
       directory: path.join(__dirname, "../../"),
       file: "api/Dockerfile",
@@ -118,15 +109,110 @@ export class ApiStack extends Stack {
     );
 
     taskRole.addToPolicy(logStmt);
-    // taskRole.addToPolicy(ddbStmt);
 
     service.targetGroup.configureHealthCheck({
       path: "/health",
     });
 
+    // ── CloudFront ───────────────────────────────────────────────────────────
+
+    const distribution = new cloudfront.Distribution(this, 'Distribution', {
+      defaultBehavior: {
+        origin: new origins.LoadBalancerV2Origin(service.loadBalancer, {
+          protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+        }),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+        originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      },
+    });
+
+    // ── Cognito ──────────────────────────────────────────────────────────────
+
+    const userPool = new cognito.UserPool(this, 'UserPool', {
+      userPoolName: namespaceIt('user-pool'),
+      selfSignUpEnabled: true,
+      signInAliases: { email: true },
+      autoVerify: { email: true },
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
+    const userPoolDomain = userPool.addDomain('UserPoolDomain', {
+      cognitoDomain: { domainPrefix: namespaceIt('car-finance') },
+    });
+
+    const callbackUrl = `https://${distribution.distributionDomainName}/api/oauthcb`;
+
+    const appClient = userPool.addClient('WebClient', {
+      generateSecret: true,
+      preventUserExistenceErrors: true,
+      oAuth: {
+        flows: { authorizationCodeGrant: true },
+        scopes: [
+          cognito.OAuthScope.OPENID,
+          cognito.OAuthScope.EMAIL,
+          cognito.OAuthScope.PROFILE,
+        ],
+        callbackUrls: [callbackUrl],
+        logoutUrls: [`https://${distribution.distributionDomainName}/api/logout`],
+      },
+    });
+
+    const cognitoDomain = `${userPoolDomain.domainName}.auth.${this.region}.amazoncognito.com`;
+
+    // ── Secrets Manager ──────────────────────────────────────────────────────
+
+    const authConfigSecret = new secretsmanager.Secret(this, 'AuthConfigSecret', {
+      secretName: namespaceIt('AuthConfig', '/'),
+      secretObjectValue: {
+        userPoolId: SecretValue.unsafePlainText(userPool.userPoolId),
+        clientId: SecretValue.unsafePlainText(appClient.userPoolClientId),
+        clientSecret: appClient.userPoolClientSecret,
+        domain: SecretValue.unsafePlainText(cognitoDomain),
+      },
+    });
+
+    // ── DynamoDB tables ──────────────────────────────────────────────────────
+
+    const pendingStateTable = new dynamodb.Table(this, 'PendingOAuthStateTable', {
+      tableName: namespaceIt('pending-oauth-state'),
+      partitionKey: { name: 'stateId', type: dynamodb.AttributeType.STRING },
+      timeToLiveAttribute: 'expiresAt',
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
+    const sessionTable = new dynamodb.Table(this, 'UserSessionsTable', {
+      tableName: namespaceIt('user-sessions'),
+      partitionKey: { name: 'sessionId', type: dynamodb.AttributeType.STRING },
+      timeToLiveAttribute: 'expiresAt',
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
+    // ── IAM grants ───────────────────────────────────────────────────────────
+
+    authConfigSecret.grantRead(taskRole);
+    pendingStateTable.grantReadWriteData(taskRole);
+    sessionTable.grantReadWriteData(taskRole);
+
+    // ── Inject env vars into the Fargate container ───────────────────────────
+
+    const container = service.taskDefinition.defaultContainer!;
+    container.addEnvironment('AUTH_CONFIG_SECRET_NAME', authConfigSecret.secretName);
+    container.addEnvironment('PENDING_STATE_TABLE', pendingStateTable.tableName);
+    container.addEnvironment('SESSION_TABLE', sessionTable.tableName);
+    container.addEnvironment('CALLBACK_URL', callbackUrl);
+
     new CfnOutput(this, "LoadBalancerDns", {
       value: service.loadBalancer.loadBalancerDnsName,
       description: "Public DNS of the Application Load Balancer",
+    });
+
+    new CfnOutput(this, "CloudFrontUrl", {
+      value: `https://${distribution.distributionDomainName}`,
+      description: "CloudFront HTTPS URL (use this as the app entry point)",
     });
   }
 }

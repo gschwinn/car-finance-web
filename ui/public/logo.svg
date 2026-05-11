@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 160">
+  <defs>
+    <!-- Prefixed to avoid collisions when this SVG is inlined -->
+    <linearGradient id="L_bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#070e1c"/>
+      <stop offset="100%" stop-color="#0d1a30"/>
+    </linearGradient>
+    <linearGradient id="L_gap" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c4a6e" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#14532d" stop-opacity="0.9"/>
+    </linearGradient>
+    <radialGradient id="L_win" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#0ea5e9" stop-opacity="0.03"/>
+    </radialGradient>
+    <filter id="L_btnGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="L_sparkle" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!--
+    Icon mark: the full 512×512 icon content scaled 0.25 → 128×128
+    positioned at x=16, y=16 inside the 800×160 logo canvas.
+    stroke-widths scale with the transform (4.5px → ~1.1px), which looks fine at logo size.
+    Number labels omitted — too small to read at logo scale, grid shape reads fine without them.
+  -->
+  <g transform="translate(16,16) scale(0.25)">
+    <!-- Background rounded square -->
+    <rect width="512" height="512" rx="96" fill="url(#L_bg)"/>
+
+    <!-- Open gap (outside light — sky blue top → ground green bottom) -->
+    <rect x="122" y="98" width="22" height="308" rx="4" fill="url(#L_gap)"/>
+
+    <!-- Hinge top -->
+    <rect x="119" y="142" width="36" height="14" rx="5" fill="#38bdf8" opacity="0.46"/>
+    <!-- Hinge bottom -->
+    <rect x="119" y="258" width="36" height="14" rx="5" fill="#38bdf8" opacity="0.46"/>
+
+    <!-- Door panel -->
+    <rect x="152" y="90" width="224" height="324" rx="18" fill="#0c1e3a"/>
+    <rect x="152" y="90" width="224" height="324" rx="18"
+          fill="none" stroke="#38bdf8" stroke-width="4.5" opacity="0.65"/>
+
+    <!-- Door left-edge depth strip -->
+    <rect x="152" y="90" width="7" height="324" fill="#1a4a7c" opacity="0.45"/>
+
+    <!-- Car door mirror housing -->
+    <path d="M 116,152 L 152,148 L 152,170 L 116,166 Z"
+          fill="#1e293b" stroke="#38bdf8" stroke-width="1.5" opacity="0.60"/>
+
+    <!-- Window -->
+    <rect x="170" y="110" width="188" height="112" rx="12" fill="url(#L_win)"/>
+    <rect x="170" y="110" width="188" height="112" rx="12"
+          fill="none" stroke="#38bdf8" stroke-width="2" opacity="0.55"/>
+
+    <!-- Car silhouette in window -->
+    <path d="M186,214 L186,200 Q186,196 190,196 L214,196 L227,181
+             Q231,177 237,177 L291,177 Q297,177 301,181 L314,196
+             L338,196 Q342,196 342,200 L342,215 Z"
+          fill="#38bdf8" opacity="0.14"/>
+    <circle cx="214" cy="215" r="11" fill="#0a1628" stroke="#38bdf8" stroke-width="1" opacity="0.2"/>
+    <circle cx="318" cy="215" r="11" fill="#0a1628" stroke="#38bdf8" stroke-width="1" opacity="0.2"/>
+
+    <!-- Divider: window → keypad -->
+    <line x1="170" y1="234" x2="358" y2="234" stroke="#38bdf8" stroke-width="1" opacity="0.20"/>
+
+    <!-- Calculator button grid 3×3 (cols x=170,235,300 / rows y=248,296,344 / 57×40 each) -->
+    <rect x="170" y="248" width="57" height="40" rx="8" fill="#112236" stroke="#38bdf8" stroke-width="0.8" opacity="0.9"/>
+    <rect x="235" y="248" width="57" height="40" rx="8" fill="#112236" stroke="#38bdf8" stroke-width="0.8" opacity="0.9"/>
+    <rect x="300" y="248" width="57" height="40" rx="8" fill="#112236" stroke="#38bdf8" stroke-width="0.8" opacity="0.9"/>
+
+    <rect x="170" y="296" width="57" height="40" rx="8" fill="#112236" stroke="#38bdf8" stroke-width="0.8" opacity="0.9"/>
+    <!-- CENTER $ key -->
+    <rect x="235" y="296" width="57" height="40" rx="8" fill="#166534" stroke="#22c55e" stroke-width="1.8" filter="url(#L_btnGlow)"/>
+    <text x="264" y="325" font-family="'Arial Black',Arial,sans-serif" font-size="26" font-weight="900" text-anchor="middle" fill="#f0fdf4">$</text>
+    <rect x="300" y="296" width="57" height="40" rx="8" fill="#112236" stroke="#38bdf8" stroke-width="0.8" opacity="0.9"/>
+
+    <rect x="170" y="344" width="57" height="40" rx="8" fill="#112236" stroke="#38bdf8" stroke-width="0.8" opacity="0.9"/>
+    <rect x="235" y="344" width="57" height="40" rx="8" fill="#112236" stroke="#38bdf8" stroke-width="0.8" opacity="0.9"/>
+    <rect x="300" y="344" width="57" height="40" rx="8" fill="#112236" stroke="#38bdf8" stroke-width="0.8" opacity="0.9"/>
+
+    <!-- Door handle -->
+    <rect x="371" y="295" width="5" height="22" rx="2.5" fill="#38bdf8" opacity="0.46"/>
+    <rect x="366" y="303" width="20" height="7" rx="3.5" fill="#38bdf8" opacity="0.68"/>
+
+    <!-- AI sparkle constellation -->
+    <g filter="url(#L_sparkle)">
+      <path d="M0,-20 L4.5,-4.5 L20,0 L4.5,4.5 L0,20 L-4.5,4.5 L-20,0 L-4.5,-4.5 Z"
+            transform="translate(418,116)" fill="#38bdf8" opacity="0.80"/>
+      <path d="M0,-10 L2.2,-2.2 L10,0 L2.2,2.2 L0,10 L-2.2,2.2 L-10,0 L-2.2,-2.2 Z"
+            transform="translate(440,94)" fill="#7dd3fc" opacity="0.52"/>
+      <circle cx="444" cy="136" r="3.5" fill="#38bdf8" opacity="0.30"/>
+    </g>
+
+    <!-- Bottom accent bar -->
+    <rect x="180" y="426" width="152" height="4" rx="2" fill="#22c55e" opacity="0.46"/>
+  </g>
+
+  <!-- Wordmark: Out(white) The(slate) Door(sky-blue) -->
+  <text x="164" y="97"
+        font-family="'DM Sans','Helvetica Neue',Arial,sans-serif"
+        font-size="54" font-weight="600" letter-spacing="-0.5">
+    <tspan fill="#f1f5f9">Out</tspan><tspan fill="#94a3b8">The</tspan><tspan fill="#38bdf8">Door</tspan>
+  </text>
+
+  <!-- Tagline -->
+  <text x="166" y="130"
+        font-family="'DM Sans','Helvetica Neue',Arial,sans-serif"
+        font-size="17" font-weight="400" fill="#64748b" letter-spacing="0.2">Know the real deal before you sign.</text>
+</svg>

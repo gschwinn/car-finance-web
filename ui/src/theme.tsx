@@ -12,9 +12,9 @@ const theme = createTheme({
       contrastText: '#0a0f1a',
     },
     secondary: {
-      main: '#a78bfa',        // violet-400
-      light: '#c4b5fd',       // violet-300
-      dark: '#7c3aed',        // violet-600
+      main: '#22c55e',        // green-500 — money/savings
+      light: '#4ade80',       // green-400
+      dark: '#15803d',        // green-700
       contrastText: '#0a0f1a',
     },
     info: {

@@ -7,7 +7,7 @@ export type UserProfile = {
 }
 
 export type UserContextValue = {
-  profile?: any;
+  userProfile?: UserProfile;
   loggedIn: boolean;
   loading: boolean;
   handleLogin: (isSignup: boolean) => void;
@@ -75,13 +75,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 };
 
 const getProfile = async (): Promise<UserProfile> => {
-  await new Promise((resolve) => {
-    setTimeout(() => (resolve(true)), 1000)
-  })
-
-  return {
-    id: '',
-    email: '',
-    authenticated: true,
-  }
+  const resp = await fetch('/api/profile')
+  if (!resp.ok) throw new Error('Failed to fetch profile')
+  return resp.json()
 }

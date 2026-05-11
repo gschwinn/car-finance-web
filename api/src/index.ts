@@ -1,7 +1,12 @@
 import express from 'express'
+import cookieParser from 'cookie-parser'
 import path from 'path'
 import { handleMcpRequest } from './mcp.js'
 import { handleAgentRequest } from './agent.js'
+import { handleLogin } from './routes/login.js'
+import { handleOauthCallback } from './routes/oauthcb.js'
+import { handleProfile } from './routes/profile.js'
+import { handleLogout } from './routes/logout.js'
 import logger from './logger.js'
 
 const port = process.env.PORT ?? 3000
@@ -11,6 +16,7 @@ const uiDist = path.resolve(__dirname, uiDir)
 
 const app = express()
 app.use(express.json())
+app.use(cookieParser())
 app.disable('x-powered-by')
 
 app.use((req, _res, next) => {
@@ -28,6 +34,10 @@ app.get('/api/version', (_req, res) => {
 
 app.post('/api/mcp', handleMcpRequest)
 app.post('/api/agent', handleAgentRequest)
+app.get('/api/login', handleLogin)
+app.get('/api/oauthcb', handleOauthCallback)
+app.get('/api/profile', handleProfile)
+app.get('/api/logout', handleLogout)
 
 app.use(express.static(uiDist))
 
