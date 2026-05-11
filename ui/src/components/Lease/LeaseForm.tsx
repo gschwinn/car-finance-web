@@ -16,6 +16,9 @@ import {
   leaseTotalCost,
   leaseDueAtSigning,
   leaseResidualValue,
+  leaseRolledMonthlyPayment,
+  leaseRolledDueAtSigning,
+  leaseRolledTotalCost,
   moneyFactorToAPR,
   formatCurrency,
 } from "@/utils/calculations";
@@ -84,6 +87,9 @@ export default function LeaseForm({
           dueAtSigning: leaseDueAtSigning(form),
           residual: leaseResidualValue(form),
           equivAPR: moneyFactorToAPR(form.moneyFactor),
+          rolledMonthly: leaseRolledMonthlyPayment(form),
+          rolledDueAtSigning: leaseRolledDueAtSigning(form),
+          rolledTotal: leaseRolledTotalCost(form),
         }
       : null;
 
@@ -117,23 +123,45 @@ export default function LeaseForm({
     <Stack component="form" onSubmit={handleSubmit} spacing={2} sx={{ p: 2.5 }}>
       {/* ── Preview banner ── */}
       {preview && (
-        <Grid container spacing={1}>
-          <StatTile
-            label="Monthly"
-            value={formatCurrency(preview.monthly)}
-            color="success"
-          />
-          <StatTile
-            label="Due at Signing"
-            value={formatCurrency(preview.dueAtSigning)}
-            color="primary.light"
-          />
-          <StatTile
-            label="Equiv APR"
-            value={`${preview.equivAPR.toFixed(2)}%`}
-            color="warning"
-          />
-        </Grid>
+        <Box>
+          <Grid container spacing={1}>
+            <StatTile
+              label="Monthly"
+              value={formatCurrency(preview.monthly)}
+              color="success"
+            />
+            <StatTile
+              label="Due at Signing"
+              value={formatCurrency(preview.dueAtSigning)}
+              color="primary.light"
+            />
+            <StatTile
+              label="Equiv APR"
+              value={`${preview.equivAPR.toFixed(2)}%`}
+              color="warning"
+            />
+          </Grid>
+          <Typography variant="caption" color="textDisabled" sx={{ mt: 1, display: "block" }}>
+            Fees rolled in
+          </Typography>
+          <Grid container spacing={1} sx={{ mt: 0 }}>
+            <StatTile
+              label="Monthly"
+              value={formatCurrency(preview.rolledMonthly)}
+              color="success"
+            />
+            <StatTile
+              label="Due at Signing"
+              value={formatCurrency(preview.rolledDueAtSigning)}
+              color="primary.light"
+            />
+            <StatTile
+              label="Total"
+              value={formatCurrency(preview.rolledTotal)}
+              color="warning"
+            />
+          </Grid>
+        </Box>
       )}
 
       {/* ── Deal name ── */}

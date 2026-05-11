@@ -1,111 +1,202 @@
-# CarFinance Web — PWA Deal Tracker
+# CarFinance Web — Deal Tracker
 
-A React + Vite + Tailwind CSS progressive web app that mirrors the CarFinance iOS app.  
-All data is stored locally in `localStorage` — no backend, no account required.
+A React + Vite progressive web app for tracking and comparing car purchase and lease deals.
+All deal data is stored locally in `localStorage` — no account required.
+An optional Express API layer powers AI-assisted deal analysis and can serve the built UI as a single deployable container.
 
 ## Stack
 
-| Layer       | Choice                        |
-|-------------|-------------------------------|
-| Framework   | React 18 + React Router v6    |
-| Build tool  | Vite 5                        |
-| Styling     | Tailwind CSS 3                |
-| State/data  | React Context + localStorage  |
-| Icons       | lucide-react                  |
+| Layer | Choice |
+|---|---|
+| UI framework | React 19 + React Router v7 |
+| Build tool | Vite 8 |
+| Component library | MUI v9 + MUI Icons |
+| Styling | MUI theme + Emotion |
+| State / data | React Context + localStorage |
+| Markdown rendering | react-markdown + remark-gfm |
+| API server | Express 5 (Node 22) |
+| AI | Vercel AI SDK + OpenAI |
+| MCP | `@modelcontextprotocol/sdk` |
+| Infrastructure | AWS CDK (ECS Fargate + ALB) |
+| Language | TypeScript throughout |
+
+## Monorepo Structure
+
+This is an npm workspaces monorepo with three packages and a shared types package.
+
+```
+carfinance-web/
+├── package.json          # Root — workspace scripts + Docker commands
+│
+├── common/               # Shared TypeScript types (BaseDeal, LeaseDeal, PurchaseDeal, …)
+│   └── src/
+│       └── types.d.ts
+│
+├── ui/                   # React SPA (Vite)
+│   └── src/
+│       ├── main.tsx
+│       ├── App.tsx
+│       ├── router.tsx
+│       ├── theme.tsx
+│       ├── types.ts          # Re-exports from common + UI-only types
+│       │
+│       ├── context/
+│       │   ├── DealsContext.tsx   # Global purchase + lease state (localStorage)
+│       │   └── UserContext.tsx    # Auth / user session
+│       │
+│       ├── hooks/
+│       │   └── useAnalyzeDeal.ts  # Calls /api/agent for AI analysis
+│       │
+│       ├── utils/
+│       │   ├── calculations.ts    # All financial math (purchase + lease, incl. rolled-in variant)
+│       │   ├── defaults.ts        # Default form values + constants
+│       │   └── storage.ts         # localStorage read/write helpers
+│       │
+│       ├── pages/
+│       │   ├── PurchasePage.tsx
+│       │   ├── LeasePage.tsx
+│       │   ├── ComparisonPage.tsx
+│       │   └── DealDetailPage.tsx
+│       │
+│       └── components/
+│           ├── shared/
+│           │   ├── DealCard.tsx        # Card shown in list views (standard + rolled-in stats)
+│           │   ├── DealDetail.tsx      # Read-only deal detail
+│           │   ├── DealBadge.tsx
+│           │   ├── DealQualityBadge.tsx
+│           │   ├── StatTile.tsx
+│           │   ├── Button.tsx
+│           │   ├── EmptyCard.tsx
+│           │   ├── MarkdownContent.tsx
+│           │   └── NotesField.tsx
+│           ├── layout/
+│           │   ├── layout.tsx
+│           │   ├── nav.tsx
+│           │   ├── page-header.tsx
+│           │   ├── mobile-header.tsx
+│           │   └── mobile-footer.tsx
+│           ├── Purchase/
+│           │   └── PurchaseForm.tsx
+│           ├── Lease/
+│           │   └── LeaseForm.tsx       # Live preview with standard + rolled-in rows
+│           ├── Comparison/
+│           │   ├── ComparisonPicker.tsx
+│           │   └── ComparisonGrid.tsx
+│           └── Export/
+│               └── ExportPanel.tsx     # Plain-text + CSV export
+│
+├── api/                  # Express API server
+│   ├── Dockerfile        # Multi-stage build — produces single image serving UI + API
+│   └── src/
+│       ├── index.ts      # Server entry: health, /api/version, /api/mcp, /api/agent, static UI
+│       ├── agent.ts      # AI deal analysis (Vercel AI SDK + OpenAI)
+│       ├── mcp.ts        # MCP request handler
+│       ├── systemPrompt.ts
+│       └── logger.ts     # Winston logger
+│
+└── infra/                # AWS CDK stack
+    └── lib/
+        └── api-stack.ts  # ECS Fargate + ALB deploying the Docker image
+```
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ (LTS recommended)
-- npm 9+
 
-### Install & Run
+- Node.js 22+ and npm 10+
+- Docker (for the containerised build)
+- An OpenAI API key (only needed for AI analysis features)
+
+### Install dependencies
 
 ```bash
-# Install dependencies
 npm install
-
-# Start dev server (http://localhost:5173)
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build locally
-npm run preview
 ```
 
-## Project Structure
+### Run the UI dev server
 
+```bash
+npm run dev          # starts Vite on http://localhost:5173
 ```
-src/
-├── main.jsx                    # Entry point
-├── App.jsx                     # Root layout + routing + nav
-├── index.css                   # Tailwind directives + component classes
-│
-├── context/
-│   └── DealsContext.jsx        # Global state (purchases + leases)
-│
-├── utils/
-│   ├── calculations.js         # All financial math (mirrors Swift computed props)
-│   ├── storage.js              # localStorage read/write + file download
-│   └── defaults.js             # Default form values + constants
-│
-├── pages/
-│   ├── PurchasePage.jsx        # Purchase list + modals
-│   ├── LeasePage.jsx           # Lease list + modals
-│   └── ComparisonPage.jsx      # Comparison grid + export
-│
-└── components/
-    ├── shared/
-    │   ├── UI.jsx              # Modal, EmptyState, StatTile, FormField, etc.
-    │   ├── DealCard.jsx        # Card used in both list views
-    │   └── DealDetail.jsx      # Full read-only deal detail (used in modal)
-    ├── Purchase/
-    │   └── PurchaseForm.jsx    # Create/edit purchase form
-    ├── Lease/
-    │   └── LeaseForm.jsx       # Create/edit lease form
-    ├── Comparison/
-    │   ├── ComparisonPicker.jsx # Deal selection sheet
-    │   └── ComparisonGrid.jsx  # Side-by-side grid with best-value highlighting
-    └── Export/
-        └── ExportPanel.jsx     # Plain text + CSV export with copy/download/share
+
+### Run the API dev server
+
+```bash
+npm run dev:api      # starts Express on http://localhost:3000 (serves UI from ui/dist)
 ```
+
+The API server also serves the built UI as static files, so you need to `npm run build` the UI first if you want to hit it through the API server.
+
+## Docker
+
+The `api/Dockerfile` is a two-stage build:
+
+1. **Builder** — installs all deps, builds both `ui` and `api`
+2. **Production** — installs prod-only deps, copies compiled output, exposes port 3000
+
+```bash
+# Build the image
+npm run build:docker
+# → docker build -f api/Dockerfile -t carfinance-api .
+
+# Run the container
+npm run start:docker
+# → docker run -p 3000:3000 -e OPENAI_API_KEY -e LOG_LEVEL carfinance-api
+```
+
+The container serves the React SPA as static files and exposes the API at `/api/*`.
+
+### Environment variables
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `OPENAI_API_KEY` | For AI features | — | OpenAI key used by the agent endpoint |
+| `LOG_LEVEL` | No | `info` | Winston log level (`debug`, `info`, `warn`, `error`) |
+| `PORT` | No | `3000` | Port the Express server listens on |
+| `NODE_ENV` | No | — | Set to `production` automatically in the Docker image |
+
+## Infrastructure (AWS CDK)
+
+The `infra/` package deploys the Docker image to ECS Fargate behind an Application Load Balancer.
+
+```bash
+npm run infra:synth    # cdk synth — preview the CloudFormation template
+npm run infra:diff     # cdk diff — compare with deployed stack
+npm run infra:deploy   # cdk deploy — push to AWS
+npm run infra:destroy  # cdk destroy — tear down
+```
+
+The stack creates a VPC, ECS cluster, Fargate service (256 CPU / 512 MB), and a public ALB.
+The `OPENAI_API_KEY` secret must be injected separately (e.g. via ECS task environment or Secrets Manager).
+
+## Lease Calculations
+
+Two lease payment variants are available in `ui/src/utils/calculations.ts`:
+
+**Standard** (`leaseMonthlyPayment` / `leaseDueAtSigning`)
+Dealer fees, acquisition fee, and down payment are paid upfront at signing.
+
+**Fees rolled in** (`leaseRolledMonthlyPayment` / `leaseRolledDueAtSigning`)
+Dealer fees and acquisition fee are rolled into the cap cost, increasing the monthly payment.
+Due at signing is reduced to first month + government fees (tags / registration) only.
+
+Both variants are shown side-by-side on each lease deal card and in the lease form live preview.
+
+## localStorage Notes
+
+- Purchases stored under `carfinance:purchases`, leases under `carfinance:leases`
+- Each key holds a JSON array of deal objects
+- Typical browser limit: **5–10 MB per origin** — sufficient for hundreds of deals
+- Data is per-browser, per-device — no sync between devices
+- Clearing browser site data will erase all deals
 
 ## PWA — Install to Home Screen
 
 ### iPhone / Safari
-1. Open the app in Safari
-2. Tap the Share button → "Add to Home Screen"
-3. The app will launch full-screen (standalone mode)
+1. Open in Safari → Share → "Add to Home Screen"
 
 ### Android / Chrome
-1. Open in Chrome
-2. Tap the three-dot menu → "Add to Home Screen" (or look for the install banner)
+1. Open in Chrome → three-dot menu → "Add to Home Screen"
 
-### Desktop Chrome/Edge
-Look for the install icon (⊕) in the address bar.
-
-## localStorage Notes
-
-- Data is stored under two keys: `carfinance:purchases` and `carfinance:leases`
-- Each key holds a JSON array of deal objects
-- Typical limit: **5–10 MB per origin** (sufficient for hundreds of deals)
-- Data is **per browser, per device** — no sync between devices
-- Clearing browser data / site data will erase all deals
-
-## Extending
-
-### Adding a new field to PurchaseDeal
-1. Add the field to `defaultPurchase()` in `utils/defaults.js`
-2. Add the input to `PurchaseForm.jsx`
-3. Add it to `purchaseSummaryRows()` in `utils/calculations.js`
-4. It will automatically appear in DealDetail and exports
-
-### Switching to IndexedDB (for larger datasets)
-Replace the functions in `utils/storage.js` with an IndexedDB wrapper  
-(e.g. `idb` npm package). The Context and components don't need changes.
-
-### Adding cloud sync
-Replace or augment the `savePurchases`/`saveLeases` calls in `DealsContext.jsx`  
-with API calls. localStorage can remain as the offline cache.
+### Desktop
+Look for the install icon in the address bar (Chrome / Edge).

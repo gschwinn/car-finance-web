@@ -13,6 +13,9 @@ import {
   dealDueAtSigning,
   dealTermMonths,
   dealDisplayName,
+  leaseRolledMonthlyPayment,
+  leaseRolledDueAtSigning,
+  leaseRolledTotalCost,
 } from "@/utils/calculations";
 
 import Box from "@mui/material/Box";
@@ -275,6 +278,24 @@ export default function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
           <GridItem deal={deal} stat="total" title="Total" val={formatCurrency(total)} />
           <GridItem deal={deal} stat="effective" title="Effective" val={formatCurrency(effectivePayment)} />
         </Grid>
+        {deal.type === "lease" && (() => {
+          const rolledMonthly = leaseRolledMonthlyPayment(deal as LeaseDeal);
+          const rolledSigning = leaseRolledDueAtSigning(deal as LeaseDeal);
+          const rolledTotal   = leaseRolledTotalCost(deal as LeaseDeal);
+          return (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="caption" color="textDisabled" sx={{ pl: 0.5 }}>
+                Fees rolled in
+              </Typography>
+              <Grid container spacing={1} sx={{ mt: 0 }}>
+                <GridItem deal={deal} stat="monthly" title="Monthly" val={formatCurrency(rolledMonthly)} color="success" />
+                <GridItem deal={deal} stat="signing" title="Signing" val={formatCurrency(rolledSigning)} />
+                <GridItem deal={deal} stat="total" title="Total" val={formatCurrency(rolledTotal)} />
+                <GridItem deal={deal} stat="effective" title="Effective" val={formatCurrency(rolledTotal / (deal as LeaseDeal).leaseTermMonths)} />
+              </Grid>
+            </Box>
+          );
+        })()}
       </CardContent>
 
       <CardActions>

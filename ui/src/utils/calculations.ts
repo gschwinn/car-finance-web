@@ -32,7 +32,8 @@ export function leaseMonthlyPayment(deal: LeaseDeal): number {
   const residual     = leaseResidualValue(deal)
   const depreciation = (deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment - residual) / deal.leaseTermMonths
   const finance      = ((deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment) + residual) * deal.moneyFactor
-  return (depreciation + finance) * (1 + deal.taxRate)
+  //return (depreciation + finance) * (1 + deal.taxRate)
+  return (depreciation + finance)
 }
 
 export function leaseTotalCost(deal: LeaseDeal): number {
@@ -40,7 +41,25 @@ export function leaseTotalCost(deal: LeaseDeal): number {
 }
 
 export function leaseDueAtSigning(deal: LeaseDeal): number {
-  return leaseMonthlyPayment(deal) + (deal.downPayment + deal.acquisitionFee + deal.dealerFees ) * (1 + deal.taxRate) + (deal.mfrIncentives * deal.taxRate) + deal.govtFees
+  return leaseMonthlyPayment(deal) + (deal.downPayment + deal.acquisitionFee + deal.dealerFees ) * (1 + deal.taxRate) + (deal.mfrIncentives * deal.taxRate) + deal.govtFees + ((leaseMonthlyPayment(deal) * deal.leaseTermMonths)*deal.taxRate)
+}
+
+// Rolled-in variant: acquisitionFee + dealerFees are added to cap cost rather than
+// paid upfront, so due at signing is only first month + govtFees (tags/registration).
+export function leaseRolledMonthlyPayment(deal: LeaseDeal): number {
+  const residual     = leaseResidualValue(deal)
+  const adjCapCost   = deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment + deal.acquisitionFee + deal.dealerFees
+  const depreciation = (adjCapCost - residual) / deal.leaseTermMonths
+  const finance      = (adjCapCost + residual) * deal.moneyFactor
+  return (depreciation + finance) * (1 + deal.taxRate)
+}
+
+export function leaseRolledDueAtSigning(deal: LeaseDeal): number {
+  return leaseRolledMonthlyPayment(deal) + deal.govtFees
+}
+
+export function leaseRolledTotalCost(deal: LeaseDeal): number {
+  return leaseRolledMonthlyPayment(deal) * (deal.leaseTermMonths - 1) + leaseRolledDueAtSigning(deal)
 }
 
 export function moneyFactorToAPR(moneyFactor: number): number {
@@ -104,7 +123,7 @@ export function leaseSummaryRows(deal: LeaseDeal): SummaryRow[] {
     { label: 'Term',               value: `${deal.leaseTermMonths} mo` },
     { label: 'Tax Rate',           value: formatPercent(deal.taxRate) },
     { label: 'Incentives',         value: formatCurrency(deal.mfrIncentives) },
-    { label: 'Total Fees',       value: formatCurrency(deal.dealerFees + deal.govtFees + deal.govtFees + deal.acquisitionFee) },
+    { label: 'Total Fees',       value: formatCurrency(deal.dealerFees + deal.govtFees + deal.acquisitionFee) },
     { label: 'Total Cost',         value: formatCurrency(leaseTotalCost(deal)) },
   ]
 }
