@@ -28,22 +28,22 @@ export async function getAuthConfig(): Promise<AuthConfig> {
   return authConfigCache;
 }
 
-export type ApiConfig = {
+export type AppConfig = {
   openaiApiKey: string;
   openaiModel: string;
 };
 
-let apiConfigCache: ApiConfig | null = null;
+let appConfigCache: AppConfig | null = null;
 
-export async function getApiConfig(): Promise<ApiConfig> {
-  if (apiConfigCache) return apiConfigCache;
+export async function getAppConfig(): Promise<AppConfig> {
+  if (appConfigCache) return appConfigCache;
 
-  const secretName = process.env.API_CONFIG_SECRET_NAME;
-  if (!secretName) throw new Error("API_CONFIG_SECRET_NAME env var not set");
+  const secretName = process.env.APP_CONFIG_SECRET_NAME;
+  if (!secretName) throw new Error("APP_CONFIG_SECRET_NAME env var not set");
 
   const resp = await client.send(
     new GetSecretValueCommand({ SecretId: secretName }),
   );
-  apiConfigCache = JSON.parse(resp.SecretString!) as ApiConfig;
-  return apiConfigCache;
+  appConfigCache = JSON.parse(resp.SecretString!) as AppConfig;
+  return appConfigCache;
 }

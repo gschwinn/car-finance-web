@@ -35,7 +35,7 @@ docker run \
   -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
   -e LOG_LEVEL \
   -e AUTH_CONFIG_SECRET_NAME=${STACK_PREFIX}/AuthConfig \
-  -e API_CONFIG_SECRET_NAME=${STACK_PREFIX}/ApiConfig \
+  -e APP_CONFIG_SECRET_NAME=${STACK_PREFIX}/AppConfig \
   -e PENDING_STATE_TABLE=${STACK_PREFIX}-pending-oauth-state \
   -e SESSION_TABLE=${STACK_PREFIX}-user-sessions \
   -e DEALS_TABLE=${STACK_PREFIX}-deals \

@@ -4,7 +4,7 @@ import type { Request, Response } from "express";
 import type { Deal } from "@/common/types";
 import logger from "./logger";
 import { systemPrompt } from "./systemPrompt";
-import { getApiConfig } from "./secrets";
+import { getAppConfig } from "./secrets";
 
 export async function handleAgentRequest(req: Request, res: Response) {
   const deal = req.body as Deal;
@@ -18,11 +18,11 @@ export async function handleAgentRequest(req: Request, res: Response) {
     return;
   }
 
-  const apiConfig = await getApiConfig();
+  const apiConfig = await getAppConfig();
   const openai = createOpenAI({ apiKey: apiConfig.openaiApiKey });
 
   const agent = new ToolLoopAgent({
-    model: openai(apiConfig.openaiModel),
+    model: openai(apiConfig.openaiModel ?? 'gpt-4o'),
     instructions: systemPrompt,
     tools: {
       webSearch: openai.tools.webSearchPreview({}),

@@ -29,9 +29,17 @@ const devServer = 'http://localhost:3000';
 const devCallbackUrl = `${devServer}${oauthCallbackPath}/local`;
 const devLogoutUrl = `${devServer}${logoutPath}`;
 
+interface ApiStackProps extends StackProps {
+  appConfigSecretArn: string;
+}
+
 export class ApiStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
+
+    const apiConfigSecret = secretsmanager.Secret.fromSecretCompleteArn(
+      this, 'AppConfigSecret', props.appConfigSecretArn
+    );
 
     const stackVersion =
       process.env.STACK_VERSION ?? process.env.npm_package_version ?? "unknown";
@@ -189,14 +197,6 @@ export class ApiStack extends Stack {
       },
     });
 
-    const apiConfigSecret = new secretsmanager.Secret(this, 'ApiConfigSecret', {
-      secretName: namespaceIt('ApiConfig', '/'),
-      secretObjectValue: {
-        openaiApiKey: SecretValue.unsafePlainText('SET ME'),
-        openaiModel: SecretValue.unsafePlainText('gpt-4o'),
-      },
-    });
-
     // ── DynamoDB tables ──────────────────────────────────────────────────────
 
     const pendingStateTable = new dynamodb.Table(this, 'PendingOAuthStateTable', {
@@ -235,10 +235,11 @@ export class ApiStack extends Stack {
 
     const container = service.taskDefinition.defaultContainer!;
     container.addEnvironment('AUTH_CONFIG_SECRET_NAME', authConfigSecret.secretName);
-    container.addEnvironment('API_CONFIG_SECRET_NAME', apiConfigSecret.secretName);
+    container.addEnvironment('APP_CONFIG_SECRET_NAME', apiConfigSecret.secretName);
     container.addEnvironment('PENDING_STATE_TABLE', pendingStateTable.tableName);
     container.addEnvironment('SESSION_TABLE', sessionTable.tableName);
     container.addEnvironment('DEALS_TABLE', dealsTable.tableName);
+    container.addEnvironment('LOG_LEVEL', 'debug');
 
     new CfnOutput(this, "LoadBalancerDns", {
       value: service.loadBalancer.loadBalancerDnsName,
@@ -252,7 +253,7 @@ export class ApiStack extends Stack {
   }
 }
 
-const namespaceIt = (name: string, delim = "-") => {
+export const namespaceIt = (name: string, delim = "-") => {
   const prefix = process.env.STACK_PREFIX ?? "dev";
   return `${prefix}${delim}${name}`;
 };
