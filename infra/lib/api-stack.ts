@@ -21,12 +21,22 @@ import {
   aws_cloudfront_origins as origins,
 } from "aws-cdk-lib";
 
+const oauthCallbackPath = '/api/oauthcb';
+const logoutPath = '/api/logout';
+
+// CAUTION local dev stuff also in api/src/routes/oauthcb.ts
+const devServer = 'http://localhost:3000';
+const devCallbackUrl = `${devServer}${oauthCallbackPath}/local`;
+const devLogoutUrl = `${devServer}${logoutPath}`;
+
 export class ApiStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
     const stackVersion =
       process.env.STACK_VERSION ?? process.env.npm_package_version ?? "unknown";
+
+    const enableLocalhostAuth = this.node.tryGetContext('localhostAuth') === "true";
 
     const logGroup = new logs.LogGroup(this, "SharedLambdaLogGroup", {
       logGroupName: `/aws/lambda/${namespaceIt("shared-logs")}`,
@@ -142,7 +152,12 @@ export class ApiStack extends Stack {
       cognitoDomain: { domainPrefix: namespaceIt('car-finance') },
     });
 
-    const callbackUrl = `https://${distribution.distributionDomainName}/api/oauthcb`;
+    const callbackUrls = [`https://${distribution.distributionDomainName}${oauthCallbackPath}`];
+    const logoutUrls = [`https://${distribution.distributionDomainName}${logoutPath}`];
+    if (enableLocalhostAuth) {
+      callbackUrls.push(devCallbackUrl);
+      logoutUrls.push(devLogoutUrl);
+    }
 
     const appClient = userPool.addClient('WebClient', {
       generateSecret: true,
@@ -154,8 +169,8 @@ export class ApiStack extends Stack {
           cognito.OAuthScope.EMAIL,
           cognito.OAuthScope.PROFILE,
         ],
-        callbackUrls: [callbackUrl],
-        logoutUrls: [`https://${distribution.distributionDomainName}/api/logout`],
+        callbackUrls,
+        logoutUrls,
       },
     });
 
@@ -169,7 +184,16 @@ export class ApiStack extends Stack {
         userPoolId: SecretValue.unsafePlainText(userPool.userPoolId),
         clientId: SecretValue.unsafePlainText(appClient.userPoolClientId),
         clientSecret: appClient.userPoolClientSecret,
-        domain: SecretValue.unsafePlainText(cognitoDomain),
+        callbackUrl: SecretValue.unsafePlainText(callbackUrls[0]),
+        authDomain: SecretValue.unsafePlainText(cognitoDomain),
+      },
+    });
+
+    const apiConfigSecret = new secretsmanager.Secret(this, 'ApiConfigSecret', {
+      secretName: namespaceIt('ApiConfig', '/'),
+      secretObjectValue: {
+        openaiApiKey: SecretValue.unsafePlainText('SET ME'),
+        openaiModel: SecretValue.unsafePlainText('gpt-4o'),
       },
     });
 
@@ -191,19 +215,30 @@ export class ApiStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
+    const dealsTable = new dynamodb.Table(this, 'DealsTable', {
+      tableName: namespaceIt('deals'),
+      partitionKey: { name: 'userId',  type: dynamodb.AttributeType.STRING },
+      sortKey:      { name: 'dealKey', type: dynamodb.AttributeType.STRING },
+      billingMode:  dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: RemovalPolicy.DESTROY,
+    });
+
     // ── IAM grants ───────────────────────────────────────────────────────────
 
     authConfigSecret.grantRead(taskRole);
+    apiConfigSecret.grantRead(taskRole);
     pendingStateTable.grantReadWriteData(taskRole);
     sessionTable.grantReadWriteData(taskRole);
+    dealsTable.grantReadWriteData(taskRole);
 
     // ── Inject env vars into the Fargate container ───────────────────────────
 
     const container = service.taskDefinition.defaultContainer!;
     container.addEnvironment('AUTH_CONFIG_SECRET_NAME', authConfigSecret.secretName);
+    container.addEnvironment('API_CONFIG_SECRET_NAME', apiConfigSecret.secretName);
     container.addEnvironment('PENDING_STATE_TABLE', pendingStateTable.tableName);
     container.addEnvironment('SESSION_TABLE', sessionTable.tableName);
-    container.addEnvironment('CALLBACK_URL', callbackUrl);
+    container.addEnvironment('DEALS_TABLE', dealsTable.tableName);
 
     new CfnOutput(this, "LoadBalancerDns", {
       value: service.loadBalancer.loadBalancerDnsName,

@@ -11,7 +11,7 @@
     "build:api": "npm run build -w api",
     "start:api": "npm run start -w api",
     "build:docker": "docker build -f api/Dockerfile -t carfinance-api .",
-    "start:docker": "docker run -p 3000:3000 -e OPENAI_API_KEY -e LOG_LEVEL carfinance-api",
+    "start:docker": "./start-docker.sh",
     "infra:synth": "npm run synth -w infra",
     "infra:deploy": "npm run deploy -w infra",
     "infra:diff": "npm run diff -w infra",

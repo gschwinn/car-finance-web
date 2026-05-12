@@ -47,7 +47,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const handleLogin = (isSignup: boolean) => {
-    window.location.href = `/api/login${isSignup ? '?signup=true' : ''}`;
+    const loginUrl = makeLoginUrl(isSignup);
+    window.location.href = loginUrl;
   };
 
   const handleLogout = () => {
@@ -79,3 +80,16 @@ const getProfile = async (): Promise<UserProfile> => {
   if (!resp.ok) throw new Error('Failed to fetch profile')
   return resp.json()
 }
+
+const makeLoginUrl = (isSignup: boolean) => {
+  const loginUrl = '/api/login';
+  const params = new URLSearchParams();
+  if (window.location.host.startsWith('localhost')) {
+    params.append('localdev', 'true');
+  }
+  if (isSignup) {
+    params.append('signup', 'true');
+  }
+  params.append('target', `${window.location.pathname}${window.location.search}`);
+  return `${loginUrl}?${params}`;
+};

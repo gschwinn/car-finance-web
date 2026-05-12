@@ -1,9 +1,17 @@
 import type { Request, Response } from 'express'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, GetCommand, DeleteCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
-import { getAuthConfig } from '../authConfig.js'
+import { getAuthConfig } from '../secrets'
+import logger from '../logger'
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}))
+
+const localdevServer = 'http://localhost:3000'; // CAUTION:  this path is also in infra workspace
+
+export const makeAuthUrlLocal = (callbackUrl: string): string => {
+  const url = URL.parse(callbackUrl);
+  return `${localdevServer}${url?.pathname}/local`;
+}
 
 export async function handleOauthCallback(req: Request, res: Response): Promise<void> {
   const { code, state } = req.query
@@ -30,10 +38,11 @@ export async function handleOauthCallback(req: Request, res: Response): Promise<
   }))
 
   const config = await getAuthConfig()
-  const callbackUrl = process.env.CALLBACK_URL!
   const credentials = Buffer.from(`${config.clientId}:${config.clientSecret}`).toString('base64')
 
-  const tokenResp = await fetch(`https://${config.domain}/oauth2/token`, {
+  const callbackUrl = (req.path.endsWith('local')) ? makeAuthUrlLocal(config.callbackUrl) : config.callbackUrl;
+
+  const tokenResp = await fetch(`https://${config.authDomain}/oauth2/token`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -47,6 +56,8 @@ export async function handleOauthCallback(req: Request, res: Response): Promise<
   })
 
   if (!tokenResp.ok) {
+    const err = await tokenResp.json();
+    logger.error('error getting oauth tokens', { err });
     res.status(502).json({ error: 'Token exchange failed' })
     return
   }
