@@ -6,7 +6,7 @@
     "build": "tsc",
     "test": "vitest run",
     "synth": "cdk synth",
-    "deploy": "cdk deploy",
+    "deploy": "cdk deploy -c localhostAuth=true",
     "diff": "cdk diff",
     "destroy": "cdk destroy"
   },

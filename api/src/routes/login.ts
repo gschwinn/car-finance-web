@@ -1,7 +1,9 @@
 import type { Request, Response } from 'express'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb'
-import { getAuthConfig } from '../authConfig.js'
+import { getAuthConfig } from '../secrets'
+import logger from '../logger'
+import { makeAuthUrlLocal } from './oauthcb'
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 
@@ -22,7 +24,9 @@ export async function handleLogin(req: Request, res: Response): Promise<void> {
     maxAge: 600 * 1000,
   })
 
-  const callbackUrl = process.env.CALLBACK_URL!
+  const { localdev } = req.query;
+  const callbackUrl = localdev === "true" ? makeAuthUrlLocal(config.callbackUrl) : config.callbackUrl;
+
   const params = new URLSearchParams({
     client_id: config.clientId,
     response_type: 'code',
@@ -35,5 +39,7 @@ export async function handleLogin(req: Request, res: Response): Promise<void> {
     params.set('screen_hint', 'signup')
   }
 
-  res.redirect(302, `https://${config.domain}/oauth2/authorize?${params}`)
+  const authUrl = `https://${config.authDomain}/oauth2/authorize?${params}`;
+  logger.debug('redirecting to auth url', { authUrl });
+  res.redirect(302, authUrl);
 }

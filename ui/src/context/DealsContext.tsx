@@ -1,19 +1,17 @@
 import { createContext, useContext, useReducer, useEffect, useCallback, type ReactNode } from 'react'
-import { v4 as uuidv4 } from 'uuid'
 import type { PurchaseDeal, LeaseDeal, Deal } from '../types'
-import {
-  loadPurchases, savePurchases,
-  loadLeases,    saveLeases,
-} from '../utils/storage'
+import { loadDeals, saveDeal, updateDeal, removeDeal } from '../utils/apiStorage'
 
 // ── State / action types ──────────────────────────────────────────────────────
 
 interface DealsState {
   purchases: PurchaseDeal[]
   leases:    LeaseDeal[]
+  loading:   boolean
 }
 
 type DealsAction =
+  | { type: 'SET_DEALS';       payload: Deal[] }
   | { type: 'ADD_PURCHASE';    payload: PurchaseDeal }
   | { type: 'UPDATE_PURCHASE'; payload: PurchaseDeal }
   | { type: 'DELETE_PURCHASE'; payload: string }
@@ -25,27 +23,34 @@ interface DealsContextValue {
   purchases:      PurchaseDeal[]
   leases:         LeaseDeal[]
   allDeals:       Deal[]
-  addPurchase:    (data: PurchaseDeal) => void
-  updatePurchase: (data: PurchaseDeal) => void
-  deletePurchase: (id: string) => void
-  addLease:       (data: LeaseDeal) => void
-  updateLease:    (data: LeaseDeal) => void
-  deleteLease:    (id: string) => void
+  loading:        boolean
+  addPurchase:    (data: PurchaseDeal) => Promise<void>
+  updatePurchase: (data: PurchaseDeal) => Promise<void>
+  deletePurchase: (id: string) => Promise<void>
+  addLease:       (data: LeaseDeal) => Promise<void>
+  updateLease:    (data: LeaseDeal) => Promise<void>
+  deleteLease:    (id: string) => Promise<void>
 }
 
 // ── Reducer ───────────────────────────────────────────────────────────────────
 
 const initialState: DealsState = {
-  purchases: loadPurchases(),
-  leases:    loadLeases(),
+  purchases: [],
+  leases:    [],
+  loading:   true,
 }
 
 function reducer(state: DealsState, action: DealsAction): DealsState {
   switch (action.type) {
-    case 'ADD_PURCHASE': {
-      const deal: PurchaseDeal = { ...action.payload, id: uuidv4(), createdAt: new Date().toISOString(), type: 'purchase' }
-      return { ...state, purchases: [deal, ...state.purchases] }
-    }
+    case 'SET_DEALS':
+      return {
+        ...state,
+        purchases: action.payload.filter((d): d is PurchaseDeal => d.type === 'purchase'),
+        leases:    action.payload.filter((d): d is LeaseDeal    => d.type === 'lease'),
+        loading:   false,
+      }
+    case 'ADD_PURCHASE':
+      return { ...state, purchases: [action.payload, ...state.purchases] }
     case 'UPDATE_PURCHASE':
       return {
         ...state,
@@ -56,10 +61,8 @@ function reducer(state: DealsState, action: DealsAction): DealsState {
     case 'DELETE_PURCHASE':
       return { ...state, purchases: state.purchases.filter(d => d.id !== action.payload) }
 
-    case 'ADD_LEASE': {
-      const deal: LeaseDeal = { ...action.payload, id: uuidv4(), createdAt: new Date().toISOString(), type: 'lease' }
-      return { ...state, leases: [deal, ...state.leases] }
-    }
+    case 'ADD_LEASE':
+      return { ...state, leases: [action.payload, ...state.leases] }
     case 'UPDATE_LEASE':
       return {
         ...state,
@@ -82,21 +85,45 @@ const DealsContext = createContext<DealsContextValue | null>(null)
 export function DealsProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState)
 
-  useEffect(() => { savePurchases(state.purchases) }, [state.purchases])
-  useEffect(() => { saveLeases(state.leases) },       [state.leases])
+  useEffect(() => {
+    loadDeals().then(deals => dispatch({ type: 'SET_DEALS', payload: deals }))
+  }, [])
 
-  const addPurchase    = useCallback((data: PurchaseDeal) => dispatch({ type: 'ADD_PURCHASE',    payload: data }), [])
-  const updatePurchase = useCallback((data: PurchaseDeal) => dispatch({ type: 'UPDATE_PURCHASE', payload: data }), [])
-  const deletePurchase = useCallback((id: string)         => dispatch({ type: 'DELETE_PURCHASE', payload: id   }), [])
+  const addPurchase = useCallback(async (data: PurchaseDeal) => {
+    const created = await saveDeal(data)
+    dispatch({ type: 'ADD_PURCHASE', payload: created as PurchaseDeal })
+  }, [])
 
-  const addLease    = useCallback((data: LeaseDeal) => dispatch({ type: 'ADD_LEASE',    payload: data }), [])
-  const updateLease = useCallback((data: LeaseDeal) => dispatch({ type: 'UPDATE_LEASE', payload: data }), [])
-  const deleteLease = useCallback((id: string)      => dispatch({ type: 'DELETE_LEASE', payload: id   }), [])
+  const updatePurchase = useCallback(async (data: PurchaseDeal) => {
+    await updateDeal(data)
+    dispatch({ type: 'UPDATE_PURCHASE', payload: data })
+  }, [])
+
+  const deletePurchase = useCallback(async (id: string) => {
+    await removeDeal('purchase', id)
+    dispatch({ type: 'DELETE_PURCHASE', payload: id })
+  }, [])
+
+  const addLease = useCallback(async (data: LeaseDeal) => {
+    const created = await saveDeal(data)
+    dispatch({ type: 'ADD_LEASE', payload: created as LeaseDeal })
+  }, [])
+
+  const updateLease = useCallback(async (data: LeaseDeal) => {
+    await updateDeal(data)
+    dispatch({ type: 'UPDATE_LEASE', payload: data })
+  }, [])
+
+  const deleteLease = useCallback(async (id: string) => {
+    await removeDeal('lease', id)
+    dispatch({ type: 'DELETE_LEASE', payload: id })
+  }, [])
 
   const value: DealsContextValue = {
     purchases: state.purchases,
     leases:    state.leases,
     allDeals:  [...state.purchases, ...state.leases],
+    loading:   state.loading,
     addPurchase, updatePurchase, deletePurchase,
     addLease,    updateLease,    deleteLease,
   }

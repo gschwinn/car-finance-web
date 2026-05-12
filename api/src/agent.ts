@@ -1,9 +1,10 @@
 import { ToolLoopAgent, stepCountIs } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { Request, Response } from "express";
-import type { Deal } from "@/common/types.js";
-import logger from "./logger.js";
-import { systemPrompt } from "./systemPrompt.js";
+import type { Deal } from "@/common/types";
+import logger from "./logger";
+import { systemPrompt } from "./systemPrompt";
+import { getApiConfig } from "./secrets";
 
 export async function handleAgentRequest(req: Request, res: Response) {
   const deal = req.body as Deal;
@@ -17,18 +18,11 @@ export async function handleAgentRequest(req: Request, res: Response) {
     return;
   }
 
-  const MODEL = process.env.OPENAI_MODEL ?? "gpt-4o";
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    logger.error("OPENAI_API_KEY environment variable is required");
-    res.status(500).json({ error: "agent request failed" });
-    return;
-  }
-
-  const openai = createOpenAI({ apiKey });
+  const apiConfig = await getApiConfig();
+  const openai = createOpenAI({ apiKey: apiConfig.openaiApiKey });
 
   const agent = new ToolLoopAgent({
-    model: openai(MODEL),
+    model: openai(apiConfig.openaiModel),
     instructions: systemPrompt,
     tools: {
       webSearch: openai.tools.webSearchPreview({}),

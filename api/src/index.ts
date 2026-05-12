@@ -1,13 +1,14 @@
 import express from 'express'
 import cookieParser from 'cookie-parser'
 import path from 'path'
-import { handleMcpRequest } from './mcp.js'
-import { handleAgentRequest } from './agent.js'
-import { handleLogin } from './routes/login.js'
-import { handleOauthCallback } from './routes/oauthcb.js'
-import { handleProfile } from './routes/profile.js'
-import { handleLogout } from './routes/logout.js'
-import logger from './logger.js'
+import { handleMcpRequest } from './mcp'
+import { handleAgentRequest } from './agent'
+import { handleLogin } from './routes/login'
+import { handleOauthCallback } from './routes/oauthcb'
+import { handleProfile } from './routes/profile'
+import { handleLogout } from './routes/logout'
+import { handleListDeals, handleCreateDeal, handleUpdateDeal, handleDeleteDeal } from './routes/deals'
+import logger from './logger'
 
 const port = process.env.PORT ?? 3000
 const uiDir = process.env.UI_DIST_DIR ?? './ui/dist'
@@ -36,8 +37,14 @@ app.post('/api/mcp', handleMcpRequest)
 app.post('/api/agent', handleAgentRequest)
 app.get('/api/login', handleLogin)
 app.get('/api/oauthcb', handleOauthCallback)
+app.get('/api/oauthcb/local', handleOauthCallback)
 app.get('/api/profile', handleProfile)
 app.get('/api/logout', handleLogout)
+
+app.get('/api/deals',            handleListDeals)
+app.post('/api/deals',           handleCreateDeal)
+app.put('/api/deals/:dealKey',   handleUpdateDeal)
+app.delete('/api/deals/:dealKey', handleDeleteDeal)
 
 app.use(express.static(uiDist))
 
