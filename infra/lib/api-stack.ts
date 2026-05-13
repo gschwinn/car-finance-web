@@ -31,13 +31,14 @@ const devLogoutUrl = `${devServer}${logoutPath}`;
 
 interface ApiStackProps extends StackProps {
   appConfigSecretArn: string;
+  appConfigSecretName: string;
 }
 
 export class ApiStack extends Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
 
-    const apiConfigSecret = secretsmanager.Secret.fromSecretCompleteArn(
+    const appConfigSecret = secretsmanager.Secret.fromSecretCompleteArn(
       this, 'AppConfigSecret', props.appConfigSecretArn
     );
 
@@ -226,7 +227,10 @@ export class ApiStack extends Stack {
     // ── IAM grants ───────────────────────────────────────────────────────────
 
     authConfigSecret.grantRead(taskRole);
-    apiConfigSecret.grantRead(taskRole);
+    taskRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['secretsmanager:GetSecretValue', 'secretsmanager:DescribeSecret'],
+      resources: [props.appConfigSecretArn],
+    }));
     pendingStateTable.grantReadWriteData(taskRole);
     sessionTable.grantReadWriteData(taskRole);
     dealsTable.grantReadWriteData(taskRole);
@@ -235,7 +239,7 @@ export class ApiStack extends Stack {
 
     const container = service.taskDefinition.defaultContainer!;
     container.addEnvironment('AUTH_CONFIG_SECRET_NAME', authConfigSecret.secretName);
-    container.addEnvironment('APP_CONFIG_SECRET_NAME', apiConfigSecret.secretName);
+    container.addEnvironment('APP_CONFIG_SECRET_NAME', props.appConfigSecretName);
     container.addEnvironment('PENDING_STATE_TABLE', pendingStateTable.tableName);
     container.addEnvironment('SESSION_TABLE', sessionTable.tableName);
     container.addEnvironment('DEALS_TABLE', dealsTable.tableName);

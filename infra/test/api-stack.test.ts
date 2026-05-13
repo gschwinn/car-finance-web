@@ -11,7 +11,10 @@ describe('ApiStack', () => {
     delete process.env.npm_package_version;
 
     const app = new cdk.App();
-    const stack = new ApiStack(app, 'TestApiStack');
+    const stack = new ApiStack(app, 'TestApiStack', { 
+      appConfigSecretArn: 'arn:aws:secretsmanager:us-east-1:123456789012:secret:test/AppConfig-AAAAAA',
+      appConfigSecretName: 'test/AppConfig',
+    });
     template = Template.fromStack(stack);
   });
 
@@ -152,7 +155,10 @@ describe('ApiStack', () => {
       process.env.STACK_VERSION = '2.0.0-test';
 
       const app = new cdk.App();
-      const stack = new ApiStack(app, 'VersionedTestStack');
+      const stack = new ApiStack(app, 'VersionedTestStack', { 
+        appConfigSecretArn: 'arn:aws:secretsmanager:us-east-1:123456789012:secret:test/AppConfig-AAAAAA',
+        appConfigSecretName: 'test/AppConfig',
+      });
       const t = Template.fromStack(stack);
 
       t.hasResourceProperties('AWS::ECS::TaskDefinition', {
