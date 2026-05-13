@@ -20,6 +20,7 @@ const appStack = new ApiStack(app, `${stackPrefix}CarFinanceStack`, {
     region: process.env.CDK_DEFAULT_REGION ?? 'us-east-1',
   },
   appConfigSecretArn: secretsStack.appConfigSecretArn,
+  appConfigSecretName: secretsStack.appConfigSecretName,
 });
 
 appStack.addDependency(secretsStack);

@@ -1,4 +1,4 @@
-import { ToolLoopAgent, stepCountIs } from "ai";
+import { OnFinishEvent, OnStepFinishEvent, ToolLoopAgent, stepCountIs } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { Request, Response } from "express";
 import type { Deal } from "@/common/types";
@@ -28,14 +28,14 @@ export async function handleAgentRequest(req: Request, res: Response) {
       webSearch: openai.tools.webSearchPreview({}),
     },
     stopWhen: stepCountIs(10),
-    onFinish: async () => {
-      logger.debug('agent finished');
+    onFinish: async ({ toolCalls, toolResults }: OnFinishEvent) => {
+      logger.debug('agent finished', { toolCalls, toolResults});
     },
     prepareStep: async (prepare: unknown) => {
       logger.debug('agent prepare step', { prepare });
     },
-    onStepFinish: async (step: unknown) => {
-      logger.debug('agent step finished');
+    onStepFinish: async ({ toolCalls, toolResults }: OnStepFinishEvent) => {
+      logger.debug('agent step finished', { toolCalls, toolResults});
     },
     experimental_onToolCallStart: (toolCall: unknown) => {
       logger.debug('agent tool call started', { toolCall } );
