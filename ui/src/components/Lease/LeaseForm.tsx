@@ -1,4 +1,4 @@
-import type { LeaseDeal } from "@/types";
+import type { LeaseDeal, LeaseTaxMethod } from "@/types";
 import { useState, useEffect } from "react";
 
 import Box from "@mui/material/Box";
@@ -336,6 +336,29 @@ export default function LeaseForm({
         </Grid>
       </Grid>
 
+      {/* ── Tax Method ── */}
+      <SectionLabel>Tax Method</SectionLabel>
+      <ToggleButtonGroup
+        color="primary"
+        value={form.leaseTaxMethod}
+        exclusive
+        onChange={(_, val) => val !== null && set("leaseTaxMethod", val as LeaseTaxMethod)}
+        size="small"
+        fullWidth
+      >
+        <ToggleButton value="monthly">Monthly</ToggleButton>
+        <ToggleButton value="upfront_payments">Upfront (Payments)</ToggleButton>
+        <ToggleButton value="upfront_full_price">Upfront (Full Price)</ToggleButton>
+      </ToggleButtonGroup>
+      <Typography variant="caption" color="text.secondary" sx={{ mt: -1 }}>
+        {form.leaseTaxMethod === 'monthly' &&
+          'Tax is applied to each monthly payment. Most states use this method: CA, NY, FL, NJ, VA, CO, WA, GA, PA, and others.'}
+        {form.leaseTaxMethod === 'upfront_payments' &&
+          'Tax on the total of all lease payments is collected at signing. Monthly payments show as pre-tax. Common in TX, AZ.'}
+        {form.leaseTaxMethod === 'upfront_full_price' &&
+          'Tax on the full vehicle selling price is due at signing — the same as buying the car outright. Results in a much larger due-at-signing. Common in IL, MN.'}
+      </Typography>
+
       {/* ── Lease Term selector ── */}
       <Typography variant="caption" color="text.secondary">
         Lease Term
@@ -399,6 +422,25 @@ export default function LeaseForm({
         </Grid>
         <Grid size={6}>
           <TextField
+            label="Trade-In Value"
+            type="number"
+            value={form.tradeInValue || ""}
+            size="small"
+            fullWidth
+            onChange={(e) => set("tradeInValue", num(e.target.value))}
+            helperText="Reduces cap cost, not taxed"
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+          />
+        </Grid>
+        <Grid size={6}>
+          <TextField
             label="Acquisition Fee"
             type="number"
             value={form.acquisitionFee || ""}
@@ -417,12 +459,32 @@ export default function LeaseForm({
         </Grid>
         <Grid size={6}>
           <TextField
-            label="Dealer Fees"
+            label="Doc Fee"
             type="number"
-            value={form.dealerFees || ""}
+            value={form.docFee || ""}
             size="small"
             fullWidth
-            onChange={(e) => set("dealerFees", num(e.target.value))}
+            onChange={(e) => set("docFee", num(e.target.value))}
+            helperText="Taxable"
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+          />
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Addl Dealer Fees"
+            type="number"
+            value={form.addlDealerFees || ""}
+            size="small"
+            fullWidth
+            onChange={(e) => set("addlDealerFees", num(e.target.value))}
+            helperText="Taxable"
             slotProps={{
               input: {
                 startAdornment: (
@@ -450,7 +512,45 @@ export default function LeaseForm({
               htmlInput: { min: 0 },
             }}
           />
-        </Grid>    
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Security Deposit"
+            type="number"
+            value={form.securityDeposit || ""}
+            size="small"
+            fullWidth
+            onChange={(e) => set("securityDeposit", num(e.target.value))}
+            helperText="Refundable, not taxed"
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+          />
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Disposition Fee"
+            type="number"
+            value={form.dispositionFee || ""}
+            size="small"
+            fullWidth
+            onChange={(e) => set("dispositionFee", num(e.target.value))}
+            helperText="Due at lease end"
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+          />
+        </Grid>
       </Grid>
 
       {/* ── Notes ── */}

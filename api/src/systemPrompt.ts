@@ -16,15 +16,23 @@ export interface LeaseDeal {
   msrp: number
   negotiatedPrice: number
   mfrIncentives: number
+  tradeInValue: number        // reduces cap cost; not subject to sales tax
   residualPercent: number
   moneyFactor: number
   leaseTermMonths: number
   mileageAllowancePerYear: number
-  downPayment: number
-  acquisitionFee: number
+  downPayment: number         // cap cost reduction; taxable upfront
+  acquisitionFee: number      // lessor origination fee; taxable upfront or rolled into cap cost
+  docFee: number              // dealer documentation fee; taxable
+  addlDealerFees: number      // additional dealer processing fees; taxable
+  securityDeposit: number     // refundable deposit at signing; not taxed
+  dispositionFee: number      // due at lease end if returning vehicle; not due at signing
+  govtFees: number            // registration, title, tags; never taxed
   taxRate: number
-  dealerFees: number
-  govtFees: number
+  leaseTaxMethod: 'monthly' | 'upfront_payments' | 'upfront_full_price'
+  // monthly: tax on each payment (most states: CA, NY, FL, NJ, VA, CO, WA, GA, PA, …)
+  // upfront_payments: tax on total payments collected at signing (TX, AZ)
+  // upfront_full_price: tax on full vehicle selling price at signing, like a purchase (IL, MN)
   notes?: string
 }
 ${codeDelimiter}

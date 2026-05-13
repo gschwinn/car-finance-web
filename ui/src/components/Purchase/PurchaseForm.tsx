@@ -285,12 +285,30 @@ export default function PurchaseForm({
         </Grid>
         <Grid size={6}>
           <TextField
-            label="Dealer Fees"
+            label="Doc Fee"
             type="number"
-            value={form.dealerFees || ""}
+            value={form.docFee || ""}
             size="small"
             fullWidth
-            onChange={(e) => set("dealerFees", num(e.target.value))}
+            onChange={(e) => set("docFee", num(e.target.value))}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">$</InputAdornment>
+                ),
+              },
+              htmlInput: { min: 0 },
+            }}
+          />
+        </Grid>
+        <Grid size={6}>
+          <TextField
+            label="Addl Dealer Fees"
+            type="number"
+            value={form.addlDealerFees || ""}
+            size="small"
+            fullWidth
+            onChange={(e) => set("addlDealerFees", num(e.target.value))}
             slotProps={{
               input: {
                 startAdornment: (

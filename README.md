@@ -150,7 +150,6 @@ The container serves the React SPA as static files and exposes the API at `/api/
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `OPENAI_API_KEY` | For AI features | — | OpenAI key used by the agent endpoint |
 | `LOG_LEVEL` | No | `info` | Winston log level (`debug`, `info`, `warn`, `error`) |
 | `PORT` | No | `3000` | Port the Express server listens on |
 | `NODE_ENV` | No | — | Set to `production` automatically in the Docker image |
@@ -190,13 +189,4 @@ Both variants are shown side-by-side on each lease deal card and in the lease fo
 - Data is per-browser, per-device — no sync between devices
 - Clearing browser site data will erase all deals
 
-## PWA — Install to Home Screen
 
-### iPhone / Safari
-1. Open in Safari → Share → "Add to Home Screen"
-
-### Android / Chrome
-1. Open in Chrome → three-dot menu → "Add to Home Screen"
-
-### Desktop
-Look for the install icon in the address bar (Chrome / Edge).
