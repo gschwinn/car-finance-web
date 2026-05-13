@@ -1,16 +1,16 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { Request, Response } from "express";
-import { z } from "zod";
-import logger from "./logger.js";
+import logger from "./logger";
 
-function createServer() {
+export async function handleMcpRequest(req: Request, res: Response) {
+  const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+  const { StreamableHTTPServerTransport } = await import("@modelcontextprotocol/sdk/server/streamableHttp.js");
+  const { z } = await import("zod");
+
   const server = new McpServer({
     name: "carfinance-api",
     version: "1.0.0",
   });
 
-  // Register tools here
   server.registerTool(
     "echo",
     {
@@ -29,14 +29,9 @@ function createServer() {
     },
   );
 
-  return server;
-}
-
-export async function handleMcpRequest(req: Request, res: Response) {
   const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined, // stateless
+    sessionIdGenerator: undefined,
   });
-  const server = createServer();
   await server.connect(transport);
   await transport.handleRequest(req, res, req.body);
 }
