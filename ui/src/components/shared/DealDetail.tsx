@@ -16,6 +16,7 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined'
 
 import { DealQualityBadge } from './DealQualityBadge'
+import { PurchaseEquityAnalysis } from './PurchaseEquityAnalysis'
 import {
   formatCurrency, formatPercent, formatNumber,
   leaseResidualValue,
@@ -44,9 +45,9 @@ type DetailSection = {
 // ── Section builders ──────────────────────────────────────────────────────────
 
 function leaseSections(deal: LeaseDeal): DetailSection[] {
-  const residual   = leaseResidualValue(deal)
-  const netCapCost = deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment
-  const rolledCapCost = netCapCost + deal.acquisitionFee + deal.dealerFees
+  const residual      = leaseResidualValue(deal)
+  const netCapCost    = deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment - deal.tradeInValue
+  const rolledCapCost = netCapCost + deal.acquisitionFee + deal.addlDealerFees + deal.docFee
 
   return [
     {
@@ -71,10 +72,16 @@ function leaseSections(deal: LeaseDeal): DetailSection[] {
           tooltip: 'Cash incentives from the manufacturer that reduce the cap cost. In most states, incentives also trigger a separate tax line item at signing.',
         },
         {
-          label: 'Down Payment',
+          label: 'Down Payment (Cap Cost Reduction)',
           value: formatCurrency(deal.downPayment),
           fieldName: 'downPayment',
           tooltip: 'Cap cost reduction paid upfront at signing. Reduces the depreciation portion of every monthly payment.',
+        },
+        {
+          label: 'Trade-In Value',
+          value: formatCurrency(deal.tradeInValue),
+          fieldName: 'tradeInValue',
+          tooltip: 'Value applied from your trade-in. Reduces the cap cost directly — not subject to sales tax.',
         },
         {
           label: 'Acquisition Fee',
@@ -83,22 +90,28 @@ function leaseSections(deal: LeaseDeal): DetailSection[] {
           tooltip: 'Lessor (bank/captive finance) fee for originating the lease. Paid at signing in the standard structure; folded into cap cost in the fees-rolled-in variant.',
         },
         {
-          label: 'Dealer Fees',
-          value: formatCurrency(deal.dealerFees),
-          fieldName: 'dealerFees',
-          tooltip: 'Dealer documentation and processing fees. Paid at signing in the standard structure; folded into cap cost in the fees-rolled-in variant.',
+          label: 'Doc Fee',
+          value: formatCurrency(deal.docFee),
+          fieldName: 'docFee',
+          tooltip: 'Dealer documentation fee. Taxable. Paid at signing in the standard structure; folded into cap cost in the fees-rolled-in variant.',
+        },
+        {
+          label: 'Addl Dealer Fees',
+          value: formatCurrency(deal.addlDealerFees),
+          fieldName: 'addlDealerFees',
+          tooltip: 'Additional dealer processing fees beyond the doc fee. Taxable. Paid at signing in the standard structure; folded into cap cost in the fees-rolled-in variant.',
         },
         {
           label: 'Net Cap Cost (standard)',
           value: formatCurrency(netCapCost),
           isComputed: true,
-          tooltip: `Negotiated price − incentives − down payment = ${formatCurrency(netCapCost)}. The adjusted cap cost used in standard payment math.`,
+          tooltip: `Negotiated price − incentives − down payment − trade-in = ${formatCurrency(netCapCost)}. The adjusted cap cost used in standard payment math.`,
         },
         {
           label: 'Adjusted Cap Cost (fees rolled in)',
           value: formatCurrency(rolledCapCost),
           isComputed: true,
-          tooltip: `Net cap cost + acquisition fee + dealer fees = ${formatCurrency(rolledCapCost)}. Acquisition and dealer fees fold into the amount being financed instead of paid upfront.`,
+          tooltip: `Net cap cost + acquisition fee + doc fee + addl dealer fees = ${formatCurrency(rolledCapCost)}. These fees fold into the amount being financed instead of paid upfront.`,
         },
       ],
     },
@@ -150,6 +163,18 @@ function leaseSections(deal: LeaseDeal): DetailSection[] {
           value: formatCurrency(deal.govtFees),
           fieldName: 'govtFees',
           tooltip: 'State/local registration, title, and tag fees. Always due at signing regardless of which payment structure is used.',
+        },
+        {
+          label: 'Security Deposit',
+          value: formatCurrency(deal.securityDeposit),
+          fieldName: 'securityDeposit',
+          tooltip: 'Refundable deposit due at signing. Not subject to sales tax. Returned at lease end if the vehicle is in good condition.',
+        },
+        {
+          label: 'Disposition Fee',
+          value: formatCurrency(deal.dispositionFee),
+          fieldName: 'dispositionFee',
+          tooltip: 'Fee due at lease end if you return the vehicle. Included in total cost but not in due-at-signing.',
         },
       ],
     },
@@ -228,10 +253,16 @@ function purchaseSections(deal: PurchaseDeal): DetailSection[] {
           tooltip: 'Sales tax applied to the financed principal.',
         },
         {
-          label: 'Dealer Fees',
-          value: formatCurrency(deal.dealerFees),
-          fieldName: 'dealerFees',
-          tooltip: 'Dealer documentation and processing fees.',
+          label: 'Doc Fee',
+          value: formatCurrency(deal.docFee),
+          fieldName: 'docFee',
+          tooltip: 'Dealer documentation fee. Taxable.',
+        },
+        {
+          label: 'Addl Dealer Fees',
+          value: formatCurrency(deal.addlDealerFees),
+          fieldName: 'addlDealerFees',
+          tooltip: 'Additional dealer processing fees beyond the doc fee. Taxable.',
         },
         {
           label: 'Govt Fees',
@@ -418,18 +449,29 @@ export default function DealDetail({ deal }: DealDetailProps) {
           label="Monthly"
           value={formatCurrency(monthly)}
           color="success"
-          tooltip={isLease
-            ? `(Depreciation + rent charge) × (1 + tax). Depreciation = (net cap cost − residual) ÷ term. Rent = (net cap cost + residual) × money factor.`
-            : 'Standard amortization of the taxed principal: principal × (r × (1+r)^n) / ((1+r)^n − 1), where r = APR/12.'}
+          tooltip={isLease ? (() => {
+            const ld = deal as LeaseDeal
+            const methodNote = ld.leaseTaxMethod === 'monthly'
+              ? 'Tax is included in each monthly payment (most states: CA, NY, FL, …).'
+              : ld.leaseTaxMethod === 'upfront_payments'
+                ? 'Tax on all payments is collected upfront at signing (TX, AZ). Monthly shown pre-tax.'
+                : 'Tax on full vehicle price is collected at signing (IL, MN). Monthly shown pre-tax.'
+            return `Depreciation = (cap cost − residual) ÷ term. Rent = (cap cost + residual) × money factor. ${methodNote}`
+          })() : 'Standard amortization of the taxed principal: principal × (r × (1+r)^n) / ((1+r)^n − 1), where r = APR/12.'}
           fieldName="monthlyPayment"
           followUps={followUps}
         />
         <StatTileDetail
           label="Due at Signing"
           value={formatCurrency(dueAtSigning)}
-          tooltip={isLease
-            ? 'First month + (down + acquisition fee + dealer fees) × (1 + tax) + (incentives × tax) + govt fees.'
-            : 'Down payment only.'}
+          tooltip={isLease ? (() => {
+            const ld = deal as LeaseDeal
+            if (ld.leaseTaxMethod === 'monthly')
+              return 'First month (with tax) + (down + acq fee + doc fee + addl dealer fees) × (1 + tax) + (incentives × tax) + govt fees + security deposit.'
+            if (ld.leaseTaxMethod === 'upfront_payments')
+              return 'First pre-tax month + all monthly taxes prepaid as lump sum + taxable upfront fees + incentive tax + govt fees + security deposit.'
+            return 'First pre-tax month + tax on full vehicle selling price + upfront fees + govt fees + security deposit.'
+          })() : 'Down payment only.'}
           fieldName="dueAtSigning"
           followUps={followUps}
         />
@@ -464,7 +506,7 @@ export default function DealDetail({ deal }: DealDetailProps) {
         const rolledSigning = leaseRolledDueAtSigning(ld)
         const rolledTotal   = leaseRolledTotalCost(ld)
         const rolledEffective = rolledTotal / ld.leaseTermMonths
-        const adjCapCost    = ld.negotiatedPrice - ld.mfrIncentives - ld.downPayment + ld.acquisitionFee + ld.dealerFees
+        const adjCapCost    = ld.negotiatedPrice - ld.mfrIncentives - ld.downPayment - ld.tradeInValue + ld.acquisitionFee + ld.addlDealerFees + ld.docFee
         return (
           <Box>
             <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mb: 0.75 }}>
@@ -475,12 +517,12 @@ export default function DealDetail({ deal }: DealDetailProps) {
                 label="Monthly"
                 value={formatCurrency(rolledMonthly)}
                 color="success"
-                tooltip={`Acquisition fee (${formatCurrency(ld.acquisitionFee)}) and dealer fees (${formatCurrency(ld.dealerFees)}) are added to the cap cost instead of paid upfront. Adjusted cap cost = ${formatCurrency(adjCapCost)}. Depreciation and rent are recalculated on this higher base, raising the monthly payment.`}
+                tooltip={`Acquisition fee (${formatCurrency(ld.acquisitionFee)}), doc fee (${formatCurrency(ld.docFee)}), and addl dealer fees (${formatCurrency(ld.addlDealerFees)}) are added to the cap cost instead of paid upfront. Adjusted cap cost = ${formatCurrency(adjCapCost)}. Depreciation and rent are recalculated on this higher base, raising the monthly payment.`}
               />
               <StatTileDetail
                 label="Due at Signing"
                 value={formatCurrency(rolledSigning)}
-                tooltip={`First month payment (${formatCurrency(rolledMonthly)}) + govt fees only (${formatCurrency(ld.govtFees)}). Acquisition fee and dealer fees are amortized into the monthly payment rather than paid upfront.`}
+                tooltip={`First month payment (${formatCurrency(rolledMonthly)}) + govt fees (${formatCurrency(ld.govtFees)}) + security deposit (${formatCurrency(ld.securityDeposit)}). Acquisition, doc, and dealer fees are amortized into the monthly payment rather than paid upfront.`}
               />
               <StatTileDetail
                 label="Total Cost"
@@ -517,6 +559,9 @@ export default function DealDetail({ deal }: DealDetailProps) {
           ))}
         </Paper>
       ))}
+
+      {/* ── Purchase equity & term analysis ── */}
+      {!isLease && <PurchaseEquityAnalysis deal={deal as PurchaseDeal} />}
 
       {/* ── Notes ── */}
       {deal.notes && (

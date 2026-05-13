@@ -13,12 +13,15 @@ export const defaultPurchase = (): PurchaseDeal => ({
   negotiatedPrice: 0,
   downPayment:     0,
   tradeInValue:    0,
+  mfrIncentives:   0,
+  docFee:          0,
+  securityDeposit: 0,
+  dispositionFee:  0,
+  addlDealerFees:  0,
+  govtFees:        0,
   loanTermMonths:  60,
   interestRate:    0,
   taxRate:         0,
-  mfrIncentives:   0,
-  dealerFees:      0,
-  govtFees:        0,
 })
 
 export const defaultLease = (): LeaseDeal => ({
@@ -33,6 +36,12 @@ export const defaultLease = (): LeaseDeal => ({
   msrp:                    0,
   negotiatedPrice:         0,
   mfrIncentives:           0,
+  tradeInValue:            0,
+  docFee:                  0,
+  securityDeposit:         0,
+  dispositionFee:          0,
+  addlDealerFees:          0,
+  govtFees:                0,
   residualPercent:         0.55,
   moneyFactor:             0.00125,
   leaseTermMonths:         36,
@@ -40,8 +49,7 @@ export const defaultLease = (): LeaseDeal => ({
   downPayment:             0,
   acquisitionFee:          0,
   taxRate:                 0,
-  dealerFees:              0,
-  govtFees:                0,
+  leaseTaxMethod:          'monthly' as const,
 })
 
 export const LOAN_TERMS:   number[] = [24, 36, 48, 60, 72, 84]

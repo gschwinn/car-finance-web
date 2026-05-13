@@ -54,7 +54,7 @@ interface StatDetail {
 
 function getStatDetail(deal: Deal, stat: StatKey): StatDetail {
   if (deal.type === "lease") {
-    const capCost = deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment;
+    const capCost = deal.negotiatedPrice - deal.mfrIncentives - deal.downPayment - deal.tradeInValue;
     const residual = deal.msrp * deal.residualPercent;
     const depreciation = (capCost - residual) / deal.leaseTermMonths;
     const rent = (capCost + residual) * deal.moneyFactor;
@@ -62,10 +62,10 @@ function getStatDetail(deal: Deal, stat: StatKey): StatDetail {
     const monthlyTax = preTaxMonthly * deal.taxRate;
     const monthly = preTaxMonthly * (1 + deal.taxRate);
 
-    const upfrontTaxable = deal.downPayment + deal.acquisitionFee + deal.dealerFees;
+    const upfrontTaxable = deal.downPayment + deal.acquisitionFee + deal.addlDealerFees + deal.docFee;
     const upfrontTax = upfrontTaxable * deal.taxRate;
     const incentiveTax = deal.mfrIncentives * deal.taxRate;
-    const dueAtSigning = monthly + upfrontTaxable + upfrontTax + incentiveTax + deal.govtFees;
+    const dueAtSigning = monthly + upfrontTaxable + upfrontTax + incentiveTax + deal.govtFees + deal.securityDeposit;
     const total = monthly * (deal.leaseTermMonths - 1) + dueAtSigning;
     const estimatedTax = monthlyTax * deal.leaseTermMonths + upfrontTax + incentiveTax;
 
@@ -73,6 +73,7 @@ function getStatDetail(deal: Deal, stat: StatKey): StatDetail {
       return {
         title: "Lease Monthly Breakdown",
         lines: [
+          `Cap cost: price - incentives - down - trade-in = ${formatCurrency(capCost, 2)}`,
           `Depreciation: (${formatCurrency(capCost)} - ${formatCurrency(residual)}) / ${deal.leaseTermMonths} = ${formatCurrency(depreciation, 2)}`,
           `Rent charge: (${formatCurrency(capCost)} + ${formatCurrency(residual)}) x ${deal.moneyFactor.toFixed(5)} = ${formatCurrency(rent, 2)}`,
           `Tax: ${formatCurrency(monthlyTax, 2)} (${(deal.taxRate * 100).toFixed(2)}%)`,
@@ -86,10 +87,11 @@ function getStatDetail(deal: Deal, stat: StatKey): StatDetail {
         title: "Due At Signing Breakdown",
         lines: [
           `First month: ${formatCurrency(monthly, 2)}`,
-          `Upfront taxable items: down + acquisition + dealer = ${formatCurrency(upfrontTaxable, 2)}`,
+          `Upfront taxable: down + acq fee + doc fee + addl dealer = ${formatCurrency(upfrontTaxable, 2)}`,
           `Tax on upfront items: ${formatCurrency(upfrontTax, 2)}`,
           `Tax on incentives: ${formatCurrency(incentiveTax, 2)}`,
           `Government fees: ${formatCurrency(deal.govtFees, 2)}`,
+          `Security deposit: ${formatCurrency(deal.securityDeposit, 2)}`,
           `Due at signing: ${formatCurrency(dueAtSigning, 2)}`,
         ],
       };
@@ -101,7 +103,8 @@ function getStatDetail(deal: Deal, stat: StatKey): StatDetail {
         lines: [
           `Monthly payments: ${deal.leaseTermMonths - 1} x ${formatCurrency(monthly, 2)} = ${formatCurrency(monthly * (deal.leaseTermMonths - 1), 2)}`,
           `Plus due at signing: ${formatCurrency(dueAtSigning, 2)}`,
-          `Total lease cost: ${formatCurrency(total, 2)}`,
+          `Plus disposition fee: ${formatCurrency(deal.dispositionFee, 2)}`,
+          `Total lease cost: ${formatCurrency(total + deal.dispositionFee, 2)}`,
           `Estimated taxes included: ${formatCurrency(estimatedTax, 2)}`,
         ],
       };

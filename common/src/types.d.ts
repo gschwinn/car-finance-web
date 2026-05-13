@@ -10,19 +10,24 @@ export type BaseDeal = {
   negotiatedPrice: number;
   downPayment: number;
   mfrIncentives: number;
+  tradeInValue: number;
+  docFee: number;
+  securityDeposit: number;
+  dispositionFee: number;
+  addlDealerFees: number;
+  govtFees: number;
   notes?: string;
   analysis?: DealAnalysis;
 }
 
 export type PurchaseDeal = {
   type: "purchase";
-  tradeInValue: number;
   loanTermMonths: number;
   interestRate: number;
   taxRate: number;
-  dealerFees: number;
-  govtFees: number;
 } & BaseDeal;
+
+export type LeaseTaxMethod = 'monthly' | 'upfront_payments' | 'upfront_full_price'
 
 export type LeaseDeal = {
   type: "lease";
@@ -32,8 +37,7 @@ export type LeaseDeal = {
   mileageAllowancePerYear: number;
   acquisitionFee: number;
   taxRate: number;
-  dealerFees: number;
-  govtFees: number;
+  leaseTaxMethod: LeaseTaxMethod;
 } & BaseDeal;
 
 export type Deal = PurchaseDeal | LeaseDeal;
