@@ -1,4 +1,4 @@
-import { OnFinishEvent, OnStepFinishEvent, ToolLoopAgent, stepCountIs } from "ai";
+import { GenerateTextResult, OnFinishEvent, OnStepFinishEvent, ToolLoopAgent, stepCountIs } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { Request, Response } from "express";
 import type { Deal } from "@/common/types";
@@ -45,20 +45,44 @@ export async function handleAgentRequest(req: Request, res: Response) {
     },
   } as any);
 
-  try {
-    const result = await agent.generate({
-      prompt: `Please analyze this ${deal.type} deal:\n${JSON.stringify(deal, null, 2)}`,
-    });
 
-    logger.debug("agent response", {
-      dealId: deal.id,
+  const userPrompt = `Please analyze this ${deal.type} deal:\n${JSON.stringify(deal, null, 2)}`;
+
+  logger.debug("calling agent", {
+    userPrompt,
+    systemPrompt,
+  });
+
+  let result: GenerateTextResult<{}, never>;
+  try {
+    result = await agent.generate({ prompt: userPrompt });
+  } catch (err) {
+    logger.error("agent.generate error", { dealId: deal.id, err });
+    res.status(500).json({ error: "agent request failed" });
+    return;
+  }
+
+  if (!result.text) {
+    logger.error("agent result error - no text property", { result });
+    res.status(500).json({ error: "agent request failed" });
+    return;
+  }
+
+  logger.debug("agent response", {
+    dealId: deal.id,
+    result: {
+      ...result,
       steps: result.steps.length,
-      usage: result.usage,
-    });
+    }
+  });
+
+  try {
     const analysis = JSON.parse(result.text);
     res.json(analysis);
+    return;
   } catch (err) {
-    logger.error("agent error", { dealId: deal.id, err });
-    res.status(500).json({ error: "agent request failed" });
+    logger.error("agent parse error", { dealId: deal.id, err: `${err}`, text: result.text });
+    // res.status(500).json({ error: "agent request failed" });
   }
+  res.json({ markdown: result.text });
 }
