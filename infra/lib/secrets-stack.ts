@@ -19,7 +19,6 @@ export class SecretsStack extends Stack {
       secretObjectValue: {
         openaiApiKey: SecretValue.unsafePlainText(process.env.OPENAI_API_KEY ?? 'SET ME'),
         openaiModel: SecretValue.unsafePlainText('gpt-4o'),
-        bs: SecretValue.unsafePlainText('good'),
       },
     });
 

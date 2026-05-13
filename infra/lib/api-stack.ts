@@ -244,7 +244,6 @@ export class ApiStack extends Stack {
     container.addEnvironment('SESSION_TABLE', sessionTable.tableName);
     container.addEnvironment('DEALS_TABLE', dealsTable.tableName);
     container.addEnvironment('LOG_LEVEL', 'debug');
-    container.addEnvironment('BS', 'good');
 
     new CfnOutput(this, "LoadBalancerDns", {
       value: service.loadBalancer.loadBalancerDnsName,
