@@ -16,12 +16,13 @@ import { useDeals } from '@/context/DealsContext'
 import { Layout } from '@/components/layout/layout'
 import { Button } from '@/components/shared/Button';
 import DealCard   from '@/components/shared/DealCard'
-import LeaseForm  from '@/components/Lease/LeaseForm'
+import { NewDealDialog } from '@/components/shared/NewDealDialog'
+import type { Deal } from '@/types'
 
 import { EmptyCard } from "@/components/shared/EmptyCard";
 import { NavItems } from "@/components/layout/nav";
 
-type ModalType = 'new' | 'edit' | 'delete' | null
+type ModalType = 'selector' | 'edit' | 'delete' | null
 
 interface ModalState {
   type: ModalType
@@ -29,7 +30,7 @@ interface ModalState {
 }
 
 export default function LeasePage() {
-  const { leases, addLease, updateLease, deleteLease } = useDeals()
+  const { leases, addLease, updateLease, deleteLease, addDealFromServer } = useDeals()
   const navigate = useNavigate()
 
   const [modalState, setModalState] = useState<ModalState>({ type: null, deal: null })
@@ -37,9 +38,12 @@ export default function LeasePage() {
   const close = () => setModalState({ type: null, deal: null })
 
   function handleSave(data: LeaseDeal) {
-    if (modalState.type === 'new') addLease(data)
-    else updateLease(data)
-    close()
+    if (modalState.type === 'edit') updateLease(data)
+    else addLease(data)
+  }
+
+  function handleUploadSuccess(deal: Deal) {
+    addDealFromServer(deal)
   }
 
   function confirmDeleteDeal() {
@@ -56,7 +60,7 @@ export default function LeasePage() {
           color="primary"
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => setModalState({ type: "new", deal: null })}
+          onClick={() => setModalState({ type: "selector", deal: null })}
         >
           New Deal
         </Button>
@@ -73,7 +77,7 @@ export default function LeasePage() {
               color="primary"
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => setModalState({ type: "new", deal: null })}
+              onClick={() => setModalState({ type: "selector", deal: null })}
             >
               Add First Deal
             </Button>
@@ -95,31 +99,24 @@ export default function LeasePage() {
         </Grid>
       )}
 
-      {/* ── New / Edit dialog ── */}
-      <Dialog
-        open={modalState.type === 'new' || modalState.type === 'edit'}
+      {/* ── New / Upload / Edit dialog ── */}
+      <NewDealDialog
+        open={modalState.type === 'selector' || modalState.type === 'edit'}
         onClose={close}
-        maxWidth="sm"
-        fullWidth
-      >
+        dealType="lease"
+        editDeal={modalState.type === 'edit' ? modalState.deal : null}
+        onFormSave={data => handleSave(data as LeaseDeal)}
+        onUploadSuccess={handleUploadSuccess}
+      />
+
+      {/* ── Delete confirm dialog ── */}
+      <Dialog open={modalState.type === 'delete'} onClose={close} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {modalState.type === 'new' ? 'New Lease Deal' : 'Edit Lease Deal'}
+          Delete Lease Deal
           <IconButton onClick={close} size="small" aria-label="close">
             <CloseIcon sx={{ fontSize: 'large', color: 'text.secondary' }} />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers>
-          <LeaseForm
-            initial={modalState.deal ?? {}}
-            onSave={handleSave}
-            onCancel={close}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Delete confirm dialog ── */}
-      <Dialog open={modalState.type === 'delete'} onClose={close} maxWidth="xs" fullWidth>
-        <DialogTitle>Delete Lease Deal</DialogTitle>
         <DialogContent>
           <DialogContentText>
             {`Delete "${modalState.deal?.name || `${modalState.deal?.carYear} ${modalState.deal?.carMake} ${modalState.deal?.carModel}`}"? This cannot be undone.`}

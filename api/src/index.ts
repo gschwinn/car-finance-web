@@ -8,6 +8,7 @@ import { handleOauthCallback } from './routes/oauthcb'
 import { handleProfile } from './routes/profile'
 import { handleLogout } from './routes/logout'
 import { handleListDeals, handleCreateDeal, handleUpdateDeal, handleDeleteDeal } from './routes/deals'
+import { handleUploadDeal } from './routes/upload'
 import logger from './logger'
 
 const port = process.env.PORT ?? 3000
@@ -16,7 +17,7 @@ const stackVersion = process.env.STACK_VERSION ?? process.env.npm_package_versio
 const uiDist = path.resolve(__dirname, uiDir)
 
 const app = express()
-app.use(express.json())
+app.use(express.json({ limit: '10mb' }))
 app.use(cookieParser())
 app.disable('x-powered-by')
 
@@ -35,6 +36,7 @@ app.get('/api/version', (_req, res) => {
 
 app.post('/api/mcp', handleMcpRequest)
 app.post('/api/agent', handleAgentRequest)
+app.post('/api/upload', handleUploadDeal)
 app.get('/api/login', handleLogin)
 app.get('/api/oauthcb', handleOauthCallback)
 app.get('/api/oauthcb/local', handleOauthCallback)
