@@ -20,16 +20,17 @@ type DealsAction =
   | { type: 'DELETE_LEASE';    payload: string }
 
 interface DealsContextValue {
-  purchases:      PurchaseDeal[]
-  leases:         LeaseDeal[]
-  allDeals:       Deal[]
-  loading:        boolean
-  addPurchase:    (data: PurchaseDeal) => Promise<void>
-  updatePurchase: (data: PurchaseDeal) => Promise<void>
-  deletePurchase: (id: string) => Promise<void>
-  addLease:       (data: LeaseDeal) => Promise<void>
-  updateLease:    (data: LeaseDeal) => Promise<void>
-  deleteLease:    (id: string) => Promise<void>
+  purchases:          PurchaseDeal[]
+  leases:             LeaseDeal[]
+  allDeals:           Deal[]
+  loading:            boolean
+  addPurchase:        (data: PurchaseDeal) => Promise<void>
+  updatePurchase:     (data: PurchaseDeal) => Promise<void>
+  deletePurchase:     (id: string) => Promise<void>
+  addLease:           (data: LeaseDeal) => Promise<void>
+  updateLease:        (data: LeaseDeal) => Promise<void>
+  deleteLease:        (id: string) => Promise<void>
+  addDealFromServer:  (deal: Deal) => void
 }
 
 // ── Reducer ───────────────────────────────────────────────────────────────────
@@ -119,6 +120,11 @@ export function DealsProvider({ children }: { children: ReactNode }) {
     dispatch({ type: 'DELETE_LEASE', payload: id })
   }, [])
 
+  const addDealFromServer = useCallback((deal: Deal) => {
+    if (deal.type === 'purchase') dispatch({ type: 'ADD_PURCHASE', payload: deal as PurchaseDeal })
+    else dispatch({ type: 'ADD_LEASE', payload: deal as LeaseDeal })
+  }, [])
+
   const value: DealsContextValue = {
     purchases: state.purchases,
     leases:    state.leases,
@@ -126,6 +132,7 @@ export function DealsProvider({ children }: { children: ReactNode }) {
     loading:   state.loading,
     addPurchase, updatePurchase, deletePurchase,
     addLease,    updateLease,    deleteLease,
+    addDealFromServer,
   }
 
   return <DealsContext.Provider value={value}>{children}</DealsContext.Provider>

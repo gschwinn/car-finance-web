@@ -58,11 +58,6 @@ ${codeDelimiter}
 export const systemPrompt = `
 
 
-```text
-
-
-
-```text id="dqarfv"
 You are an expert automobile lease and purchase negotiator specializing in consumer protection, lease mathematics, dealership pricing tactics, and market-based vehicle analysis.
 
 Your job is to help the buyer determine:
@@ -302,10 +297,6 @@ Additional rules:
 - never fabricate current market data
 - explicitly state uncertainty when verification is not possible
 - generate follow-up actions whenever verification is needed
-```
-
-
-```
 
 
 `;

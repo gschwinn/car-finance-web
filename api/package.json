@@ -16,7 +16,8 @@
     "ai": "^6.0.175",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
-    "winston": "^3.19.0"
+    "winston": "^3.19.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

@@ -1,4 +1,4 @@
-import type { PurchaseDeal } from "@/types";
+import type { PurchaseDeal, Deal } from "@/types";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -16,12 +16,12 @@ import { useDeals } from "@/context/DealsContext";
 import { Layout } from "@/components/layout/layout";
 import { Button } from '@/components/shared/Button';
 import DealCard from "@/components/shared/DealCard";
-import PurchaseForm from "@/components/Purchase/PurchaseForm";
+import { NewDealDialog } from "@/components/shared/NewDealDialog";
 
 import { EmptyCard } from "@/components/shared/EmptyCard";
 import { NavItems } from "@/components/layout/nav";
 
-type ModalType = "new" | "edit" | "delete" | null;
+type ModalType = "selector" | "edit" | "delete" | null;
 
 interface ModalState {
   type: ModalType;
@@ -29,7 +29,7 @@ interface ModalState {
 }
 
 export default function PurchasePage() {
-  const { purchases, addPurchase, updatePurchase, deletePurchase } = useDeals();
+  const { purchases, addPurchase, updatePurchase, deletePurchase, addDealFromServer } = useDeals();
   const navigate = useNavigate();
 
   const [modalState, setModalState] = useState<ModalState>({
@@ -40,9 +40,12 @@ export default function PurchasePage() {
   const close = () => setModalState({ type: null, deal: null });
 
   function handleSave(data: PurchaseDeal) {
-    if (modalState.type === "new") addPurchase(data);
-    else updatePurchase(data);
-    close();
+    if (modalState.type === "edit") updatePurchase(data);
+    else addPurchase(data);
+  }
+
+  function handleUploadSuccess(deal: Deal) {
+    addDealFromServer(deal);
   }
 
   function confirmDeleteDeal() {
@@ -63,7 +66,7 @@ export default function PurchasePage() {
           color="primary"
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => setModalState({ type: "new", deal: null })}
+          onClick={() => setModalState({ type: "selector", deal: null })}
         >
           New Deal
         </Button>
@@ -79,7 +82,7 @@ export default function PurchasePage() {
               color="primary"
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={() => setModalState({ type: "new", deal: null })}
+              onClick={() => setModalState({ type: "selector", deal: null })}
             >
               Add First Deal
             </Button>
@@ -101,31 +104,24 @@ export default function PurchasePage() {
         </Grid>
       )}
 
-      {/* ── New / Edit dialog ── */}
-      <Dialog
-        open={modalState.type === "new" || modalState.type === "edit"}
+      {/* ── New / Upload / Edit dialog ── */}
+      <NewDealDialog
+        open={modalState.type === "selector" || modalState.type === "edit"}
         onClose={close}
-        maxWidth="sm"
-        fullWidth
-      >
+        dealType="purchase"
+        editDeal={modalState.type === "edit" ? modalState.deal : null}
+        onFormSave={data => handleSave(data as PurchaseDeal)}
+        onUploadSuccess={handleUploadSuccess}
+      />
+
+      {/* ── Delete confirm dialog ── */}
+      <Dialog open={modalState.type === 'delete'} onClose={close} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {modalState.type === "new" ? "New Purchase Deal" : "Edit Purchase Deal"}
+          Delete Deal
           <IconButton onClick={close} size="small" aria-label="close">
             <CloseIcon sx={{ fontSize: 'large', color: 'text.secondary' }} />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers>
-          <PurchaseForm
-            initial={modalState.deal ?? {}}
-            onSave={handleSave}
-            onCancel={close}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Delete confirm dialog ── */}
-      <Dialog open={modalState.type === 'delete'} onClose={close} maxWidth="xs" fullWidth>
-        <DialogTitle>Delete Deal</DialogTitle>
         <DialogContent>
           <DialogContentText>
             {`Delete "${modalState.deal?.name || `${modalState.deal?.carYear} ${modalState.deal?.carMake} ${modalState.deal?.carModel}`}"? This cannot be undone.`}
