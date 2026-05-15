@@ -2,6 +2,8 @@ import type { PurchaseDeal, Deal } from "@/types";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import Alert from "@mui/material/Alert";
+import Box from "@mui/material/Box";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -9,8 +11,12 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import IconButton from "@mui/material/IconButton";
 import Grid from "@mui/material/Grid";
+import Link from "@mui/material/Link";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
+
+const BANNER_KEY = 'purchase_101_banner_dismissed'
 
 import { useDeals } from "@/context/DealsContext";
 import { Layout } from "@/components/layout/layout";
@@ -32,12 +38,15 @@ export default function PurchasePage() {
   const { purchases, addPurchase, updatePurchase, deletePurchase, addDealFromServer } = useDeals();
   const navigate = useNavigate();
 
-  const [modalState, setModalState] = useState<ModalState>({
-    type: null,
-    deal: null,
-  });
+  const [modalState, setModalState] = useState<ModalState>({ type: null, deal: null });
+  const [bannerDismissed, setBannerDismissed] = useState(() => localStorage.getItem(BANNER_KEY) === '1');
 
   const close = () => setModalState({ type: null, deal: null });
+
+  function dismissBanner() {
+    localStorage.setItem(BANNER_KEY, '1');
+    setBannerDismissed(true);
+  }
 
   function handleSave(data: PurchaseDeal) {
     if (modalState.type === "edit") updatePurchase(data);
@@ -62,30 +71,65 @@ export default function PurchasePage() {
           : null
       }
       action={
-        <Button
-          color="primary"
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setModalState({ type: "selector", deal: null })}
-        >
-          New Deal
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            color="info"
+            variant="outlined"
+            startIcon={<SchoolOutlinedIcon />}
+            onClick={() => navigate('/purchase/learn')}
+          >
+            Buying 101
+          </Button>
+          <Button
+            color="primary"
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setModalState({ type: "selector", deal: null })}
+          >
+            New Deal
+          </Button>
+        </Box>
       }
     >
+      {!bannerDismissed && (
+        <Alert severity="info" onClose={dismissBanner} sx={{ mb: 2 }}>
+          New to financing a car?{' '}
+          <Link
+            component="button"
+            variant="body2"
+            onClick={() => navigate('/purchase/learn')}
+            sx={{ verticalAlign: 'baseline' }}
+          >
+            Read our quick Buying 101 guide
+          </Link>
+          {' '}to understand APR, loan terms, and how to negotiate the best deal.
+        </Alert>
+      )}
+
       {purchases.length === 0 ? (
         <EmptyCard
           Icon={NavItems[1].Icon}
           title="No purchase deals yet"
           description="Save different configurations to compare offers from multiple dealers."
           action={
-            <Button
-              color="primary"
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setModalState({ type: "selector", deal: null })}
-            >
-              Add First Deal
-            </Button>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
+              <Button
+                color="primary"
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setModalState({ type: "selector", deal: null })}
+              >
+                Add First Deal
+              </Button>
+              <Link
+                component="button"
+                variant="body2"
+                color="text.secondary"
+                onClick={() => navigate('/purchase/learn')}
+              >
+                New to car buying? Start with our guide →
+              </Link>
+            </Box>
           }
         />
       ) : (

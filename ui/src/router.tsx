@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import PurchasePage from "./pages/PurchasePage";
 import LeasePage from "./pages/LeasePage";
+import LearnPage from "./pages/LearnPage";
 import ComparisonPage from "./pages/ComparisonPage";
 import DealDetailPage from "./pages/DealDetailPage";
 
@@ -16,6 +17,14 @@ export const createRouter = () => {
       {
         path: "/lease",
         element: <LeasePage />,
+      },
+      {
+        path: "/lease/learn",
+        element: <LearnPage dealType="lease" />,
+      },
+      {
+        path: "/purchase/learn",
+        element: <LearnPage dealType="purchase" />,
       },
       {
         path: "/purchase/:dealId",

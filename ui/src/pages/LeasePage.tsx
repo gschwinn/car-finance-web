@@ -2,6 +2,7 @@ import type { LeaseDeal } from '@/types'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+import Alert from "@mui/material/Alert";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -9,8 +10,11 @@ import DialogContentText from "@mui/material/DialogContentText";
 import DialogActions from "@mui/material/DialogActions";
 import IconButton from "@mui/material/IconButton";
 import Grid from "@mui/material/Grid";
+import Box from "@mui/material/Box";
+import Link from "@mui/material/Link";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import SchoolOutlinedIcon from "@mui/icons-material/SchoolOutlined";
 
 import { useDeals } from '@/context/DealsContext'
 import { Layout } from '@/components/layout/layout'
@@ -21,6 +25,8 @@ import type { Deal } from '@/types'
 
 import { EmptyCard } from "@/components/shared/EmptyCard";
 import { NavItems } from "@/components/layout/nav";
+
+const BANNER_KEY = 'lease_101_banner_dismissed'
 
 type ModalType = 'selector' | 'edit' | 'delete' | null
 
@@ -34,8 +40,14 @@ export default function LeasePage() {
   const navigate = useNavigate()
 
   const [modalState, setModalState] = useState<ModalState>({ type: null, deal: null })
+  const [bannerDismissed, setBannerDismissed] = useState(() => localStorage.getItem(BANNER_KEY) === '1')
 
   const close = () => setModalState({ type: null, deal: null })
+
+  function dismissBanner() {
+    localStorage.setItem(BANNER_KEY, '1')
+    setBannerDismissed(true)
+  }
 
   function handleSave(data: LeaseDeal) {
     if (modalState.type === 'edit') updateLease(data)
@@ -56,16 +68,45 @@ export default function LeasePage() {
       title="Lease Deals"
       subtitle={leases.length > 0 ? `${leases.length} saved deal${leases.length !== 1 ? 's' : ''}` : null}
       action={
-        <Button
-          color="primary"
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setModalState({ type: "selector", deal: null })}
-        >
-          New Deal
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            color="info"
+            variant="outlined"
+            startIcon={<SchoolOutlinedIcon />}
+            onClick={() => navigate('/lease/learn')}
+          >
+            Leasing 101
+          </Button>
+          <Button
+            color="primary"
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setModalState({ type: "selector", deal: null })}
+          >
+            New Deal
+          </Button>
+        </Box>
       }
     >
+
+      {!bannerDismissed && (
+        <Alert
+          severity="info"
+          onClose={dismissBanner}
+          sx={{ mb: 2 }}
+        >
+          New to leasing?{' '}
+          <Link
+            component="button"
+            variant="body2"
+            onClick={() => navigate('/lease/learn')}
+            sx={{ verticalAlign: 'baseline' }}
+          >
+            Read our quick Leasing 101 guide
+          </Link>
+          {' '}to understand money factors, residuals, and what to negotiate.
+        </Alert>
+      )}
 
       {leases.length === 0 ? (
         <EmptyCard
@@ -73,14 +114,24 @@ export default function LeasePage() {
           title="No lease deals yet"
           description="Compare offers from different dealers, with different money factors, residuals, and mileage tiers."
           action={
-            <Button
-              color="primary"
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setModalState({ type: "selector", deal: null })}
-            >
-              Add First Deal
-            </Button>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
+              <Button
+                color="primary"
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setModalState({ type: "selector", deal: null })}
+              >
+                Add First Deal
+              </Button>
+              <Link
+                component="button"
+                variant="body2"
+                color="text.secondary"
+                onClick={() => navigate('/lease/learn')}
+              >
+                New to leasing? Start with our guide →
+              </Link>
+            </Box>
           }
         />
       ) : (
