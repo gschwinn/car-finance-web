@@ -46,7 +46,8 @@ export async function handleAgentRequest(req: Request, res: Response) {
   } as any);
 
 
-  const userPrompt = `Please analyze this ${deal.type} deal:\n${JSON.stringify(deal, null, 2)}`;
+  const today = new Date().toISOString().split('T')[0];
+  const userPrompt = `Today's date is ${today}. Use it in all web searches to ensure results are current.\n\nPlease analyze this ${deal.type} deal:\n${JSON.stringify(deal, null, 2)}`;
 
   logger.debug("calling agent", {
     userPrompt,
@@ -76,13 +77,14 @@ export async function handleAgentRequest(req: Request, res: Response) {
     }
   });
 
+  // Strip markdown code fences the model sometimes adds despite instructions
+  const cleaned = result.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
   try {
-    const analysis = JSON.parse(result.text);
+    const analysis = JSON.parse(cleaned);
     res.json(analysis);
     return;
   } catch (err) {
     logger.error("agent parse error", { dealId: deal.id, err: `${err}`, text: result.text });
-    // res.status(500).json({ error: "agent request failed" });
   }
   res.json({ markdown: result.text });
 }
