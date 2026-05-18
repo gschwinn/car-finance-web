@@ -23,7 +23,8 @@ export const MobileFooter = () => {
           component={RouterNavLink}
           sx={(th) => ({
             display: "flex",
-            flexDirection: "column",
+            flexDirection: "row",
+            justifyContent: "center",
             alignItems: "center",
             flex: 1,
             gap: 1,

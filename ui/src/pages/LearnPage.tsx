@@ -37,18 +37,18 @@ export type LearnPageProps = { dealType: 'lease' | 'purchase' }
 const LEASE_BASE: LeaseDeal = {
   id: null, type: 'lease', name: '', createdAt: null,
   carMake: '', carModel: '', carYear: 2025, trimLevel: '',
-  msrp:                    45_000,
-  negotiatedPrice:         43_000,
+  msrp:                    50_000,
+  negotiatedPrice:         48_000,
   mfrIncentives:           0,
   tradeInValue:            0,
   downPayment:             0,
-  acquisitionFee:          895,
+  acquisitionFee:          595,
   docFee:                  0,
   addlDealerFees:          0,
   govtFees:                0,
   securityDeposit:         0,
   dispositionFee:          395,
-  residualPercent:         0.55,
+  residualPercent:         0.64,
   moneyFactor:             0.00125,
   leaseTermMonths:         36,
   mileageAllowancePerYear: 10_000,
@@ -59,8 +59,8 @@ const LEASE_BASE: LeaseDeal = {
 const PURCHASE_BASE: PurchaseDeal = {
   id: null, type: 'purchase', name: '', createdAt: null,
   carMake: '', carModel: '', carYear: 2025, trimLevel: '',
-  msrp:            35_000,
-  negotiatedPrice: 33_000,
+  msrp:            50_000,
+  negotiatedPrice: 48_000,
   mfrIncentives:   0,
   tradeInValue:    0,
   downPayment:     2_000,
@@ -341,45 +341,153 @@ function Glossary({ items }: { items: { term: string; def: string }[] }) {
   )
 }
 
+// ── Sandbox disclaimers ───────────────────────────────────────────────────────
+
+function LeaseTaxDisclaimer() {
+  return (
+    <Box
+      sx={{
+        p: 1.5,
+        mb: 2.5,
+        borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'warning.dark',
+        backgroundColor: 'rgba(234,179,8,0.07)',
+      }}
+    >
+      <Typography variant="caption" color="warning.light" sx={{ display: 'block', fontWeight: 600, mb: 0.5 }}>
+        Taxes &amp; fees excluded by default
+      </Typography>
+      <Typography variant="caption" color="text.secondary">
+        Set your state's sales tax rate below to include it — taxes have an outsized impact on lease
+        payments. <strong>How tax is collected varies significantly by state:</strong> most states
+        (CA, FL, NY, NJ, VA) add tax to each monthly payment; TX and AZ collect all lease taxes as
+        a lump sum at signing; IL and MN tax the full vehicle price at signing, like a purchase.
+        This sandbox uses the monthly method only — actual due-at-signing will differ in TX, AZ, IL,
+        and MN. Acquisition fees, doc fees, and government fees are also excluded.
+      </Typography>
+    </Box>
+  )
+}
+
+function PurchaseTaxDisclaimer() {
+  return (
+    <Box
+      sx={{
+        p: 1.5,
+        mb: 2.5,
+        borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'warning.dark',
+        backgroundColor: 'rgba(234,179,8,0.07)',
+      }}
+    >
+      <Typography variant="caption" color="warning.light" sx={{ display: 'block', fontWeight: 600, mb: 0.5 }}>
+        Taxes &amp; fees excluded by default
+      </Typography>
+      <Typography variant="caption" color="text.secondary">
+        Set your state's sales tax rate below to include it in the financed amount. Doc fees,
+        dealer fees, and government fees are excluded — budget an additional $500–$1,500 depending
+        on your state and dealer. These are financed into the loan in this sandbox when a tax rate
+        is set, which is typical but not universal.
+      </Typography>
+    </Box>
+  )
+}
+
 // ── Lease Sandbox ─────────────────────────────────────────────────────────────
 
+// Baseline negotiated price as a proportion of MSRP (matches LEASE_BASE defaults)
+const LEASE_PRICE_RATIO = LEASE_BASE.negotiatedPrice / LEASE_BASE.msrp
+const PURCHASE_PRICE_RATIO = PURCHASE_BASE.negotiatedPrice / PURCHASE_BASE.msrp
+
+function defaultLeaseNegotiatedPrice(msrp: number) {
+  return Math.round((msrp * LEASE_PRICE_RATIO) / 500) * 500
+}
+function defaultPurchaseNegotiatedPrice(msrp: number) {
+  return Math.round((msrp * PURCHASE_RATIO) / 500) * 500
+}
+
+// keep a separate const so the ratio is only computed once
+const PURCHASE_RATIO = PURCHASE_PRICE_RATIO
+
 function LeaseSandbox() {
+  const [msrp, setMsrp]                     = useState(LEASE_BASE.msrp)
+  const [taxRate, setTaxRate]               = useState(0)
   const [negotiatedPrice, setNegotiatedPrice] = useState(LEASE_BASE.negotiatedPrice)
-  const [moneyFactor, setMoneyFactor] = useState(LEASE_BASE.moneyFactor)
+  const [moneyFactor, setMoneyFactor]       = useState(LEASE_BASE.moneyFactor)
   const [residualPercent, setResidualPercent] = useState(LEASE_BASE.residualPercent)
   const [leaseTermMonths, setLeaseTermMonths] = useState(LEASE_BASE.leaseTermMonths)
-  const [downPayment, setDownPayment] = useState(LEASE_BASE.downPayment)
+  const [downPayment, setDownPayment]       = useState(LEASE_BASE.downPayment)
+
+  function handleMsrpChange(newMsrp: number) {
+    setMsrp(newMsrp)
+    setNegotiatedPrice(Math.min(defaultLeaseNegotiatedPrice(newMsrp), newMsrp))
+    setMoneyFactor(LEASE_BASE.moneyFactor)
+    setResidualPercent(LEASE_BASE.residualPercent)
+    setLeaseTermMonths(LEASE_BASE.leaseTermMonths)
+    setDownPayment(LEASE_BASE.downPayment)
+  }
+
+  // Baseline: proportional negotiated price, all other levers at defaults, current MSRP + tax
+  const baseline = useMemo<LeaseDeal>(() => ({
+    ...LEASE_BASE,
+    msrp,
+    taxRate,
+    negotiatedPrice: Math.min(defaultLeaseNegotiatedPrice(msrp), msrp),
+    moneyFactor:     LEASE_BASE.moneyFactor,
+    residualPercent: LEASE_BASE.residualPercent,
+    leaseTermMonths: LEASE_BASE.leaseTermMonths,
+    downPayment:     LEASE_BASE.downPayment,
+  }), [msrp, taxRate])
 
   const current = useMemo<LeaseDeal>(
-    () => ({ ...LEASE_BASE, negotiatedPrice, moneyFactor, residualPercent, leaseTermMonths, downPayment }),
-    [negotiatedPrice, moneyFactor, residualPercent, leaseTermMonths, downPayment],
+    () => ({ ...LEASE_BASE, msrp, taxRate, negotiatedPrice, moneyFactor, residualPercent, leaseTermMonths, downPayment }),
+    [msrp, taxRate, negotiatedPrice, moneyFactor, residualPercent, leaseTermMonths, downPayment],
   )
 
-  const baseMonthly  = leaseMonthlyPayment(LEASE_BASE)
-  const baseSigning  = leaseDueAtSigning(LEASE_BASE)
-  const baseTotal    = leaseTotalCost(LEASE_BASE)
-
-  const curMonthly   = leaseMonthlyPayment(current)
-  const curSigning   = leaseDueAtSigning(current)
-  const curTotal     = leaseTotalCost(current)
+  const baseMonthly = leaseMonthlyPayment(baseline)
+  const baseSigning = leaseDueAtSigning(baseline)
+  const baseTotal   = leaseTotalCost(baseline)
+  const curMonthly  = leaseMonthlyPayment(current)
+  const curSigning  = leaseDueAtSigning(current)
+  const curTotal    = leaseTotalCost(current)
 
   const mfStep = 0.00025
   const mfMin  = 0.00025
   const mfMax  = 0.00350
+  const taxStep = 0.005
+  const taxMax  = 0.15
+  const msrpStep = 1_000
+  const msrpMin  = 20_000
+  const msrpMax  = 120_000
+  const priceMin = Math.round(msrp * 0.85 / 500) * 500
 
   return (
     <Box>
+      <LeaseTaxDisclaimer />
       <Grid container spacing={3}>
         {/* Controls */}
         <Grid size={{ xs: 12, md: 7 }}>
           <ControlRow
+            label="Vehicle MSRP"
+            helper="Set this to match your actual vehicle's sticker price. All other defaults scale proportionally."
+          >
+            <StepperControl
+              display={formatCurrency(msrp)}
+              onDecrement={() => handleMsrpChange(Math.max(msrpMin, msrp - msrpStep))}
+              onIncrement={() => handleMsrpChange(Math.min(msrpMax, msrp + msrpStep))}
+            />
+          </ControlRow>
+
+          <ControlRow
             label="Negotiated Price"
-            helper={`The selling price you negotiate with the dealer. Baseline: ${formatCurrency(LEASE_BASE.negotiatedPrice)}`}
+            helper="The selling price you negotiate with the dealer. Baseline is the proportional default for the MSRP above."
           >
             <Slider
               value={negotiatedPrice}
-              min={40_000}
-              max={LEASE_BASE.msrp}
+              min={priceMin}
+              max={msrp}
               step={500}
               onChange={(_, v) => setNegotiatedPrice(v as number)}
               valueLabelDisplay="auto"
@@ -387,8 +495,8 @@ function LeaseSandbox() {
             />
             <Typography variant="caption" color="textDisabled">
               {formatCurrency(negotiatedPrice)}
-              {negotiatedPrice < LEASE_BASE.msrp && (
-                <> &nbsp;·&nbsp; {((1 - negotiatedPrice / LEASE_BASE.msrp) * 100).toFixed(1)}% off MSRP</>
+              {negotiatedPrice < msrp && (
+                <> &nbsp;·&nbsp; {((1 - negotiatedPrice / msrp) * 100).toFixed(1)}% off MSRP</>
               )}
             </Typography>
           </ControlRow>
@@ -420,7 +528,7 @@ function LeaseSandbox() {
             <Typography variant="caption" color="textDisabled">
               {(residualPercent * 100).toFixed(0)}%
               &nbsp;·&nbsp;
-              {formatCurrency(LEASE_BASE.msrp * residualPercent)} of {formatCurrency(LEASE_BASE.msrp)} MSRP
+              {formatCurrency(msrp * residualPercent)} of {formatCurrency(msrp)} MSRP
             </Typography>
           </ControlRow>
 
@@ -447,7 +555,7 @@ function LeaseSandbox() {
             <Slider
               value={downPayment}
               min={0}
-              max={5_000}
+              max={Math.round(msrp * 0.15 / 500) * 500}
               step={500}
               onChange={(_, v) => setDownPayment(v as number)}
               valueLabelDisplay="auto"
@@ -456,6 +564,17 @@ function LeaseSandbox() {
             <Typography variant="caption" color="textDisabled">
               {formatCurrency(downPayment)}
             </Typography>
+          </ControlRow>
+
+          <ControlRow
+            label="Sales Tax Rate"
+            helper="Your state's sales tax rate. Defaults to 0% so you can see the pre-tax impact of each lever first."
+          >
+            <StepperControl
+              display={taxRate === 0 ? 'None (0%)' : `${(taxRate * 100).toFixed(1)}%`}
+              onDecrement={() => setTaxRate((v) => Math.max(0, parseFloat((v - taxStep).toFixed(3))))}
+              onIncrement={() => setTaxRate((v) => Math.min(taxMax, parseFloat((v + taxStep).toFixed(3))))}
+            />
           </ControlRow>
         </Grid>
 
@@ -477,8 +596,9 @@ function LeaseSandbox() {
             <ResultTile label="Due at Signing"    value={curSigning}  baseline={baseSigning} />
             <ResultTile label="Total Lease Cost"  value={curTotal}    baseline={baseTotal}   />
             <Typography variant="caption" color="textDisabled" sx={{ mt: 0.5 }}>
-              Baseline: {formatCurrency(LEASE_BASE.msrp)} MSRP · {(LEASE_BASE.residualPercent * 100).toFixed(0)}% RV
-              &nbsp;·&nbsp; MF {LEASE_BASE.moneyFactor.toFixed(5)} · {LEASE_BASE.leaseTermMonths} mo · 8% tax
+              Baseline: {formatCurrency(msrp)} MSRP · {(LEASE_BASE.residualPercent * 100).toFixed(0)}% RV
+              &nbsp;·&nbsp; MF {LEASE_BASE.moneyFactor.toFixed(5)} · {LEASE_BASE.leaseTermMonths} mo
+              {taxRate > 0 && <> · {(taxRate * 100).toFixed(1)}% tax</>}
             </Typography>
           </Box>
         </Grid>
@@ -490,41 +610,79 @@ function LeaseSandbox() {
 // ── Purchase Sandbox ──────────────────────────────────────────────────────────
 
 function PurchaseSandbox() {
+  const [msrp, setMsrp]                     = useState(PURCHASE_BASE.msrp)
+  const [taxRate, setTaxRate]               = useState(0)
   const [negotiatedPrice, setNegotiatedPrice] = useState(PURCHASE_BASE.negotiatedPrice)
-  const [interestRate, setInterestRate]       = useState(PURCHASE_BASE.interestRate)
-  const [loanTermMonths, setLoanTermMonths]   = useState(PURCHASE_BASE.loanTermMonths)
-  const [downPayment, setDownPayment]         = useState(PURCHASE_BASE.downPayment)
+  const [interestRate, setInterestRate]     = useState(PURCHASE_BASE.interestRate)
+  const [loanTermMonths, setLoanTermMonths] = useState(PURCHASE_BASE.loanTermMonths)
+  const [downPayment, setDownPayment]       = useState(PURCHASE_BASE.downPayment)
+
+  function handleMsrpChange(newMsrp: number) {
+    setMsrp(newMsrp)
+    setNegotiatedPrice(Math.min(defaultPurchaseNegotiatedPrice(newMsrp), newMsrp))
+    setInterestRate(PURCHASE_BASE.interestRate)
+    setLoanTermMonths(PURCHASE_BASE.loanTermMonths)
+    setDownPayment(PURCHASE_BASE.downPayment)
+  }
+
+  // Baseline: proportional negotiated price, default levers, current MSRP + tax
+  const baseline = useMemo<PurchaseDeal>(() => ({
+    ...PURCHASE_BASE,
+    msrp,
+    taxRate,
+    negotiatedPrice: Math.min(defaultPurchaseNegotiatedPrice(msrp), msrp),
+    interestRate:    PURCHASE_BASE.interestRate,
+    loanTermMonths:  PURCHASE_BASE.loanTermMonths,
+    downPayment:     PURCHASE_BASE.downPayment,
+  }), [msrp, taxRate])
 
   const current = useMemo<PurchaseDeal>(
-    () => ({ ...PURCHASE_BASE, negotiatedPrice, interestRate, loanTermMonths, downPayment }),
-    [negotiatedPrice, interestRate, loanTermMonths, downPayment],
+    () => ({ ...PURCHASE_BASE, msrp, taxRate, negotiatedPrice, interestRate, loanTermMonths, downPayment }),
+    [msrp, taxRate, negotiatedPrice, interestRate, loanTermMonths, downPayment],
   )
 
-  const baseMonthly  = purchaseMonthlyPayment(PURCHASE_BASE)
-  const baseInterest = purchaseTotalInterest(PURCHASE_BASE)
-  const baseTotal    = purchaseTotalCost(PURCHASE_BASE)
-
+  const baseMonthly  = purchaseMonthlyPayment(baseline)
+  const baseInterest = purchaseTotalInterest(baseline)
+  const baseTotal    = purchaseTotalCost(baseline)
   const curMonthly   = purchaseMonthlyPayment(current)
   const curInterest  = purchaseTotalInterest(current)
   const curTotal     = purchaseTotalCost(current)
 
-  const aprStep = 0.0025
-  const aprMin  = 0
-  const aprMax  = 0.15
+  const aprStep  = 0.0025
+  const aprMin   = 0
+  const aprMax   = 0.15
+  const taxStep  = 0.005
+  const taxMax   = 0.15
+  const msrpStep = 1_000
+  const msrpMin  = 15_000
+  const msrpMax  = 120_000
+  const priceMin = Math.round(msrp * 0.85 / 500) * 500
 
   return (
     <Box>
+      <PurchaseTaxDisclaimer />
       <Grid container spacing={3}>
         {/* Controls */}
         <Grid size={{ xs: 12, md: 7 }}>
           <ControlRow
+            label="Vehicle MSRP"
+            helper="Set this to match your actual vehicle's sticker price. All other defaults scale proportionally."
+          >
+            <StepperControl
+              display={formatCurrency(msrp)}
+              onDecrement={() => handleMsrpChange(Math.max(msrpMin, msrp - msrpStep))}
+              onIncrement={() => handleMsrpChange(Math.min(msrpMax, msrp + msrpStep))}
+            />
+          </ControlRow>
+
+          <ControlRow
             label="Negotiated Price"
-            helper={`The out-the-door selling price. Baseline: ${formatCurrency(PURCHASE_BASE.negotiatedPrice)}`}
+            helper="The out-the-door selling price you negotiate. Baseline scales proportionally to the MSRP above."
           >
             <Slider
               value={negotiatedPrice}
-              min={28_000}
-              max={PURCHASE_BASE.msrp}
+              min={priceMin}
+              max={msrp}
               step={500}
               onChange={(_, v) => setNegotiatedPrice(v as number)}
               valueLabelDisplay="auto"
@@ -532,8 +690,8 @@ function PurchaseSandbox() {
             />
             <Typography variant="caption" color="textDisabled">
               {formatCurrency(negotiatedPrice)}
-              {negotiatedPrice < PURCHASE_BASE.msrp && (
-                <> &nbsp;·&nbsp; {((1 - negotiatedPrice / PURCHASE_BASE.msrp) * 100).toFixed(1)}% off MSRP</>
+              {negotiatedPrice < msrp && (
+                <> &nbsp;·&nbsp; {((1 - negotiatedPrice / msrp) * 100).toFixed(1)}% off MSRP</>
               )}
             </Typography>
           </ControlRow>
@@ -572,7 +730,7 @@ function PurchaseSandbox() {
             <Slider
               value={downPayment}
               min={0}
-              max={10_000}
+              max={Math.round(msrp * 0.2 / 500) * 500}
               step={500}
               onChange={(_, v) => setDownPayment(v as number)}
               valueLabelDisplay="auto"
@@ -581,6 +739,17 @@ function PurchaseSandbox() {
             <Typography variant="caption" color="textDisabled">
               {formatCurrency(downPayment)}
             </Typography>
+          </ControlRow>
+
+          <ControlRow
+            label="Sales Tax Rate"
+            helper="Your state's sales tax rate. Defaults to 0% — add it to see the real impact on your financed amount."
+          >
+            <StepperControl
+              display={taxRate === 0 ? 'None (0%)' : `${(taxRate * 100).toFixed(1)}%`}
+              onDecrement={() => setTaxRate((v) => Math.max(0, parseFloat((v - taxStep).toFixed(3))))}
+              onIncrement={() => setTaxRate((v) => Math.min(taxMax, parseFloat((v + taxStep).toFixed(3))))}
+            />
           </ControlRow>
         </Grid>
 
@@ -602,9 +771,10 @@ function PurchaseSandbox() {
             <ResultTile label="Total Interest"   value={curInterest} baseline={baseInterest} />
             <ResultTile label="Total Cost"       value={curTotal}    baseline={baseTotal}    />
             <Typography variant="caption" color="textDisabled" sx={{ mt: 0.5 }}>
-              Baseline: {formatCurrency(PURCHASE_BASE.msrp)} MSRP
+              Baseline: {formatCurrency(msrp)} MSRP
               &nbsp;·&nbsp; {(PURCHASE_BASE.interestRate * 100).toFixed(2)}% APR
-              &nbsp;·&nbsp; {PURCHASE_BASE.loanTermMonths} mo · 8% tax
+              &nbsp;·&nbsp; {PURCHASE_BASE.loanTermMonths} mo
+              {taxRate > 0 && <> · {(taxRate * 100).toFixed(1)}% tax</>}
             </Typography>
           </Box>
         </Grid>
@@ -635,11 +805,12 @@ export default function LearnPage({ dealType }: LearnPageProps) {
 
       <SectionPaper label="Impact Sandbox — See How the Numbers Move">
         <Typography variant="body2" color="textSecondary" sx={{ mb: 2.5 }}>
-          Adjust any lever below to see the real-time impact on your payment.
-          {isLease
-            ? ' This demo uses a $45,000 MSRP vehicle with typical baseline terms.'
-            : ' This demo uses a $35,000 vehicle with typical baseline terms.'}
-          {' '}Deltas are shown relative to the baseline.
+          Note: This is an illustrative tool to help you understand some of the math involved. 
+          For now we are omitting things like incentives, dealer/doc fees, acquisition, etc that 
+          you will have once you start to model a real deal.
+          Start by setting the vehicle MSRP to match your car, then adjust any lever to see
+          real-time payment impact. Deltas are shown relative to the baseline — the proportional
+          default values for the MSRP you've entered.
         </Typography>
         {isLease ? <LeaseSandbox /> : <PurchaseSandbox />}
       </SectionPaper>

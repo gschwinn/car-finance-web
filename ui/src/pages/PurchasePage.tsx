@@ -73,20 +73,24 @@ export default function PurchasePage() {
       action={
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
+            size="small"
             color="info"
             variant="outlined"
             startIcon={<SchoolOutlinedIcon />}
             onClick={() => navigate('/purchase/learn')}
+            sx={{ lineHeight: 1.1 }}
           >
-            Buying 101
+            Purchase 101
           </Button>
           <Button
+            size="small"
             color="primary"
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setModalState({ type: "selector", deal: null })}
+            sx={{ lineHeight: 1.1 }}
           >
-            New Deal
+            Deal
           </Button>
         </Box>
       }
