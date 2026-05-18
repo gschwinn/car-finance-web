@@ -90,6 +90,7 @@ export default function DealDetailPage() {
         <>
           <Button
             sx={{ mr: 1 }}
+            size="small"
             color="secondary"
             variant="outlined"
             disabled={analyzing}
@@ -101,14 +102,17 @@ export default function DealDetailPage() {
               )
             }
             onClick={handleAnalyze}
+            sx={{ lineHeight: 1.1 }}
           >
             {analyzing ? "Analyzing…" : "Analyze"}
           </Button>
           <Button
             color="info"
+            size="small"
             onClick={() => setEditOpen(true)}
             variant="outlined"
             startIcon={<EditOutlinedIcon />}
+            sx={{ lineHeight: 1.1 }}
           >
             Edit
           </Button>
