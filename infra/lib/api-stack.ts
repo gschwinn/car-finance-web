@@ -10,6 +10,7 @@ import {
   StackProps,
   SecretValue,
   RemovalPolicy,
+  aws_certificatemanager as acm,
   aws_ec2 as ec2,
   aws_ecs as ecs,
   aws_iam as iam,
@@ -17,10 +18,12 @@ import {
   aws_cognito as cognito,
   aws_dynamodb as dynamodb,
   aws_secretsmanager as secretsmanager,
+  aws_ssm as ssm,
   aws_cloudfront as cloudfront,
   aws_cloudfront_origins as origins,
 } from "aws-cdk-lib";
 
+const productionDomainName = 'outthedoor.stingrayengineering.com';
 const oauthCallbackPath = '/api/oauthcb';
 const logoutPath = '/api/logout';
 
@@ -38,9 +41,7 @@ export class ApiStack extends Stack {
   constructor(scope: Construct, id: string, props: ApiStackProps) {
     super(scope, id, props);
 
-    const appConfigSecret = secretsmanager.Secret.fromSecretCompleteArn(
-      this, 'AppConfigSecret', props.appConfigSecretArn
-    );
+    const { appConfigSecretArn, appConfigSecretName } = props;
 
     const stackVersion =
       process.env.STACK_VERSION ?? process.env.npm_package_version ?? "unknown";
@@ -135,6 +136,13 @@ export class ApiStack extends Stack {
 
     // ── CloudFront ───────────────────────────────────────────────────────────
 
+    let otdCert;
+    if (isProduction()) {
+      const stingrayCertArn = ssm.StringParameter.valueForStringParameter(this, '/stingray/sites/stingrayCertARN');
+      otdCert = acm.Certificate.fromCertificateArn(this, 'OutTheDoorCert', stingrayCertArn);
+    }
+    const domainNames = isProduction() ? [productionDomainName] : [];
+
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
       defaultBehavior: {
         origin: new origins.LoadBalancerV2Origin(service.loadBalancer, {
@@ -145,6 +153,8 @@ export class ApiStack extends Stack {
         cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
         originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
       },
+      certificate: otdCert,
+      domainNames,
     });
 
     // ── Cognito ──────────────────────────────────────────────────────────────
@@ -161,8 +171,9 @@ export class ApiStack extends Stack {
       cognitoDomain: { domainPrefix: namespaceIt('car-finance') },
     });
 
-    const callbackUrls = [`https://${distribution.distributionDomainName}${oauthCallbackPath}`];
-    const logoutUrls = [`https://${distribution.distributionDomainName}${logoutPath}`];
+    const callbackHost = isProduction() ? productionDomainName : distribution.distributionDomainName;
+    const callbackUrls = [`https://${callbackHost}${oauthCallbackPath}`];
+    const logoutUrls = [`https://${callbackHost}${logoutPath}`];
     if (enableLocalhostAuth) {
       callbackUrls.push(devCallbackUrl);
       logoutUrls.push(devLogoutUrl);
@@ -229,7 +240,7 @@ export class ApiStack extends Stack {
     authConfigSecret.grantRead(taskRole);
     taskRole.addToPolicy(new iam.PolicyStatement({
       actions: ['secretsmanager:GetSecretValue', 'secretsmanager:DescribeSecret'],
-      resources: [props.appConfigSecretArn],
+      resources: [appConfigSecretArn],
     }));
     pendingStateTable.grantReadWriteData(taskRole);
     sessionTable.grantReadWriteData(taskRole);
@@ -239,7 +250,7 @@ export class ApiStack extends Stack {
 
     const container = service.taskDefinition.defaultContainer!;
     container.addEnvironment('AUTH_CONFIG_SECRET_NAME', authConfigSecret.secretName);
-    container.addEnvironment('APP_CONFIG_SECRET_NAME', props.appConfigSecretName);
+    container.addEnvironment('APP_CONFIG_SECRET_NAME', appConfigSecretName);
     container.addEnvironment('PENDING_STATE_TABLE', pendingStateTable.tableName);
     container.addEnvironment('SESSION_TABLE', sessionTable.tableName);
     container.addEnvironment('DEALS_TABLE', dealsTable.tableName);
@@ -256,6 +267,8 @@ export class ApiStack extends Stack {
     });
   }
 }
+
+const isProduction = () => process.env.STACK_PREFIX === "prod";
 
 export const namespaceIt = (name: string, delim = "-") => {
   const prefix = process.env.STACK_PREFIX ?? "dev";

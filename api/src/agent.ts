@@ -82,9 +82,8 @@ export async function handleAgentRequest(req: Request, res: Response) {
   try {
     const analysis = JSON.parse(cleaned);
     res.json(analysis);
-    return;
   } catch (err) {
     logger.error("agent parse error", { dealId: deal.id, err: `${err}`, text: result.text });
+    res.status(500).json({ error: "agent request failed" });
   }
-  res.json({ markdown: result.text });
 }

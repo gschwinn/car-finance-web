@@ -1,7 +1,6 @@
 import express from 'express'
 import cookieParser from 'cookie-parser'
 import path from 'path'
-import { handleMcpRequest } from './mcp'
 import { handleAgentRequest } from './agent'
 import { handleLogin } from './routes/login'
 import { handleOauthCallback } from './routes/oauthcb'
@@ -34,7 +33,6 @@ app.get('/api/version', (_req, res) => {
   res.json({ version: stackVersion })
 })
 
-app.post('/api/mcp', handleMcpRequest)
 app.post('/api/agent', handleAgentRequest)
 app.post('/api/upload', handleUploadDeal)
 app.get('/api/login', handleLogin)

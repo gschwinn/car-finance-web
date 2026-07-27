@@ -2,7 +2,11 @@
   "name": "carfinance-web",
   "private": true,
   "version": "1.0.0",
-  "workspaces": ["ui", "api", "infra"],
+  "workspaces": [
+    "ui",
+    "api",
+    "infra"
+  ],
   "scripts": {
     "dev": "npm run dev -w ui",
     "build": "npm run build -w ui",
