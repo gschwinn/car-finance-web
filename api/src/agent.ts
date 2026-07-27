@@ -1,21 +1,20 @@
 import { GenerateTextResult, OnFinishEvent, OnStepFinishEvent, ToolLoopAgent, stepCountIs } from "ai";
 import { createOpenAI } from "@ai-sdk/openai";
-import type { Request, Response } from "express";
+import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from "aws-lambda";
 import type { Deal } from "@/common/types";
 import logger from "./logger";
 import { systemPrompt } from "./systemPrompt";
 import { getAppConfig } from "./secrets";
+import { jsonResponse, parseBody } from "./http";
 
-export async function handleAgentRequest(req: Request, res: Response) {
-  const deal = req.body as Deal;
+export async function handleAgentRequest(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+  const deal = parseBody<Deal>(event);
 
   if (!deal || typeof deal !== "object" || !("type" in deal)) {
-    res.status(400).json({ error: "request body must be a valid Deal object" });
-    return;
+    return jsonResponse(400, { error: "request body must be a valid Deal object" });
   }
   if (deal.type !== "purchase" && deal.type !== "lease") {
-    res.status(400).json({ error: '"type" must be "purchase" or "lease"' });
-    return;
+    return jsonResponse(400, { error: '"type" must be "purchase" or "lease"' });
   }
 
   const apiConfig = await getAppConfig();
@@ -59,14 +58,12 @@ export async function handleAgentRequest(req: Request, res: Response) {
     result = await agent.generate({ prompt: userPrompt });
   } catch (err) {
     logger.error("agent.generate error", { dealId: deal.id, err });
-    res.status(500).json({ error: "agent request failed" });
-    return;
+    return jsonResponse(500, { error: "agent request failed" });
   }
 
   if (!result.text) {
     logger.error("agent result error - no text property", { result });
-    res.status(500).json({ error: "agent request failed" });
-    return;
+    return jsonResponse(500, { error: "agent request failed" });
   }
 
   logger.debug("agent response", {
@@ -81,9 +78,9 @@ export async function handleAgentRequest(req: Request, res: Response) {
   const cleaned = result.text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
   try {
     const analysis = JSON.parse(cleaned);
-    res.json(analysis);
+    return jsonResponse(200, analysis);
   } catch (err) {
     logger.error("agent parse error", { dealId: deal.id, err: `${err}`, text: result.text });
-    res.status(500).json({ error: "agent request failed" });
+    return jsonResponse(500, { error: "agent request failed" });
   }
 }

@@ -23,4 +23,4 @@ const appStack = new ApiStack(app, `${stackPrefix}CarFinanceStack`, {
   appConfigSecretName: secretsStack.appConfigSecretName,
 });
 
-appStack.addDependency(secretsStack);
+appStack.addStackDependency(secretsStack);

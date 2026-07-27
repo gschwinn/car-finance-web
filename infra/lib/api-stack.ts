@@ -1,8 +1,4 @@
-import * as ecsPatterns from "aws-cdk-lib/aws-ecs-patterns";
-import { DockerImageAsset } from "aws-cdk-lib/aws-ecr-assets";
-import { Construct } from "constructs";
 import * as path from "path";
-import os from 'os';
 
 import {
   CfnOutput,
@@ -10,18 +6,24 @@ import {
   StackProps,
   SecretValue,
   RemovalPolicy,
+  Duration,
   aws_certificatemanager as acm,
-  aws_ec2 as ec2,
-  aws_ecs as ecs,
+  aws_lambda as lambda,
+  aws_lambda_nodejs as lambdaNodejs,
+  aws_apigatewayv2 as apigatewayv2,
   aws_iam as iam,
   aws_logs as logs,
   aws_cognito as cognito,
   aws_dynamodb as dynamodb,
   aws_secretsmanager as secretsmanager,
   aws_ssm as ssm,
+  aws_s3 as s3,
+  aws_s3_deployment as s3deploy,
   aws_cloudfront as cloudfront,
   aws_cloudfront_origins as origins,
 } from "aws-cdk-lib";
+import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import { Construct } from "constructs";
 
 const productionDomainName = 'outthedoor.stingrayengineering.com';
 const oauthCallbackPath = '/api/oauthcb';
@@ -43,118 +45,12 @@ export class ApiStack extends Stack {
 
     const { appConfigSecretArn, appConfigSecretName } = props;
 
-    const stackVersion =
-      process.env.STACK_VERSION ?? process.env.npm_package_version ?? "unknown";
-
     const enableLocalhostAuth = this.node.tryGetContext('localhostAuth') === "true";
 
     const logGroup = new logs.LogGroup(this, "SharedLambdaLogGroup", {
       logGroupName: `/aws/lambda/${namespaceIt("shared-logs")}`,
       retention: logs.RetentionDays.ONE_MONTH,
       removalPolicy: RemovalPolicy.DESTROY,
-    });
-    const logStmt = new iam.PolicyStatement({
-      actions: [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents",
-      ],
-      resources: [logGroup.logGroupArn, `${logGroup.logGroupArn}:*`],
-    });
-
-    const vpc = new ec2.Vpc(this, 'CarFinanceVpc', {
-      maxAzs: 2,
-      subnetConfiguration: [
-        {
-          cidrMask: 24,
-          name: 'PublicSubnet',
-          subnetType: ec2.SubnetType.PUBLIC,
-        },
-        {
-          cidrMask: 24,
-          name: 'PrivateSubnet',
-          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-        },
-      ],
-      natGateways: 0,
-    });
-    const cluster = new ecs.Cluster(this, 'CarFinanceCluster', { vpc });
-
-    const taskRole = new iam.Role(this, 'CarFinanceTaskRole', {
-      assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName(
-          'service-role/AmazonECSTaskExecutionRolePolicy',
-        ),
-      ],
-    });
-
-    const image = new DockerImageAsset(this, "ApiImage", {
-      directory: path.join(__dirname, "../../"),
-      file: "api/Dockerfile",
-    });
-
-    const service = new ecsPatterns.ApplicationLoadBalancedFargateService(
-      this,
-      "ApiService",
-      {
-        cluster,
-        cpu: 256,
-        desiredCount: 1,
-        memoryLimitMiB: 512,
-        runtimePlatform: {
-          cpuArchitecture:
-            os.platform() === 'darwin'
-              ? ecs.CpuArchitecture.ARM64
-              : ecs.CpuArchitecture.X86_64,
-          operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
-        },
-        taskImageOptions: {
-          image: ecs.ContainerImage.fromDockerImageAsset(image),
-          containerPort: 3000,
-          environment: {
-            NODE_ENV: "production",
-            STACK_VERSION: stackVersion,
-          },
-          enableLogging: true,
-          logDriver: ecs.LogDrivers.awsLogs({
-            streamPrefix: namespaceIt('fargate-logs'),
-            logGroup: logGroup,
-          }),
-          taskRole,
-        },
-        publicLoadBalancer: true,
-        assignPublicIp: true,
-      },
-    );
-
-    taskRole.addToPolicy(logStmt);
-
-    service.targetGroup.configureHealthCheck({
-      path: "/health",
-    });
-
-    // ── CloudFront ───────────────────────────────────────────────────────────
-
-    let otdCert;
-    if (isProduction()) {
-      const stingrayCertArn = ssm.StringParameter.valueForStringParameter(this, '/stingray/sites/stingrayCertARN');
-      otdCert = acm.Certificate.fromCertificateArn(this, 'OutTheDoorCert', stingrayCertArn);
-    }
-    const domainNames = isProduction() ? [productionDomainName] : [];
-
-    const distribution = new cloudfront.Distribution(this, 'Distribution', {
-      defaultBehavior: {
-        origin: new origins.LoadBalancerV2Origin(service.loadBalancer, {
-          protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
-        }),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
-        originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
-      },
-      certificate: otdCert,
-      domainNames,
     });
 
     // ── Cognito ──────────────────────────────────────────────────────────────
@@ -169,6 +65,44 @@ export class ApiStack extends Stack {
 
     const userPoolDomain = userPool.addDomain('UserPoolDomain', {
       cognitoDomain: { domainPrefix: namespaceIt('car-finance') },
+    });
+
+    // ── S3 + CloudFront (UI) ────────────────────────────────────────────────
+
+    const uiBucket = new s3.Bucket(this, 'UiBucket', {
+      bucketName: namespaceIt('car-finance-ui').toLowerCase(),
+      removalPolicy: RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+    });
+
+    let otdCert;
+    if (isProduction()) {
+      const stingrayCertArn = ssm.StringParameter.valueForStringParameter(this, '/stingray/sites/stingrayCertARN');
+      otdCert = acm.Certificate.fromCertificateArn(this, 'OutTheDoorCert', stingrayCertArn);
+    }
+    const domainNames = isProduction() ? [productionDomainName] : [];
+
+    // Placeholder origin for /api/* — swapped for the real HTTP API origin once httpApi exists below.
+    const distribution = new cloudfront.Distribution(this, 'Distribution', {
+      defaultBehavior: {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(uiBucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+      },
+      certificate: otdCert,
+      domainNames,
+      errorResponses: [
+        { httpStatus: 403, responseHttpStatus: 200, responsePagePath: '/index.html' },
+        { httpStatus: 404, responseHttpStatus: 200, responsePagePath: '/index.html' },
+      ],
+    });
+
+    new s3deploy.BucketDeployment(this, 'UiDeployment', {
+      sources: [s3deploy.Source.asset(path.join(__dirname, "../../ui/dist"))],
+      destinationBucket: uiBucket,
+      distribution,
+      distributionPaths: ['/*'],
     });
 
     const callbackHost = isProduction() ? productionDomainName : distribution.distributionDomainName;
@@ -235,35 +169,107 @@ export class ApiStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY,
     });
 
-    // ── IAM grants ───────────────────────────────────────────────────────────
+    // ── Lambda functions ─────────────────────────────────────────────────────
 
-    authConfigSecret.grantRead(taskRole);
-    taskRole.addToPolicy(new iam.PolicyStatement({
+    const apiTsconfigPath = path.join(__dirname, "../../api/tsconfig.json");
+    const commonEnv = { LOG_LEVEL: 'debug', NODE_ENV: 'production' };
+
+    const makeApiFunction = (id: string, entryFile: string, environment: Record<string, string>) =>
+      new lambdaNodejs.NodejsFunction(this, id, {
+        entry: path.join(__dirname, `../../api/src/handlers/${entryFile}`),
+        handler: 'handler',
+        runtime: lambda.Runtime.NODEJS_22_X,
+        architecture: lambda.Architecture.ARM_64,
+        memorySize: 512,
+        timeout: Duration.seconds(28),
+        logGroup,
+        environment: { ...commonEnv, ...environment },
+        bundling: {
+          tsconfig: apiTsconfigPath,
+        },
+      });
+
+    const authFunction = makeApiFunction('AuthFunction', 'auth.ts', {
+      AUTH_CONFIG_SECRET_NAME: authConfigSecret.secretName,
+      PENDING_STATE_TABLE: pendingStateTable.tableName,
+      SESSION_TABLE: sessionTable.tableName,
+    });
+
+    const dealsFunction = makeApiFunction('DealsFunction', 'deals.ts', {
+      SESSION_TABLE: sessionTable.tableName,
+      DEALS_TABLE: dealsTable.tableName,
+    });
+
+    const uploadFunction = makeApiFunction('UploadFunction', 'upload.ts', {
+      SESSION_TABLE: sessionTable.tableName,
+      DEALS_TABLE: dealsTable.tableName,
+      APP_CONFIG_SECRET_NAME: appConfigSecretName,
+    });
+
+    const agentFunction = makeApiFunction('AgentFunction', 'agent.ts', {
+      APP_CONFIG_SECRET_NAME: appConfigSecretName,
+    });
+
+    const appConfigSecretReadPolicy = new iam.PolicyStatement({
       actions: ['secretsmanager:GetSecretValue', 'secretsmanager:DescribeSecret'],
       resources: [appConfigSecretArn],
-    }));
-    pendingStateTable.grantReadWriteData(taskRole);
-    sessionTable.grantReadWriteData(taskRole);
-    dealsTable.grantReadWriteData(taskRole);
+    });
 
-    // ── Inject env vars into the Fargate container ───────────────────────────
+    authConfigSecret.grantRead(authFunction);
+    pendingStateTable.grantReadWriteData(authFunction);
+    sessionTable.grantReadWriteData(authFunction);
 
-    const container = service.taskDefinition.defaultContainer!;
-    container.addEnvironment('AUTH_CONFIG_SECRET_NAME', authConfigSecret.secretName);
-    container.addEnvironment('APP_CONFIG_SECRET_NAME', appConfigSecretName);
-    container.addEnvironment('PENDING_STATE_TABLE', pendingStateTable.tableName);
-    container.addEnvironment('SESSION_TABLE', sessionTable.tableName);
-    container.addEnvironment('DEALS_TABLE', dealsTable.tableName);
-    container.addEnvironment('LOG_LEVEL', 'debug');
+    sessionTable.grantReadData(dealsFunction);
+    dealsTable.grantReadWriteData(dealsFunction);
 
-    new CfnOutput(this, "LoadBalancerDns", {
-      value: service.loadBalancer.loadBalancerDnsName,
-      description: "Public DNS of the Application Load Balancer",
+    sessionTable.grantReadData(uploadFunction);
+    dealsTable.grantReadWriteData(uploadFunction);
+    uploadFunction.addToRolePolicy(appConfigSecretReadPolicy);
+
+    agentFunction.addToRolePolicy(appConfigSecretReadPolicy);
+
+    // ── API Gateway ───────────────────────────────────────────────────────────
+
+    const httpApi = new apigatewayv2.HttpApi(this, 'HttpApi');
+
+    const authIntegration = new HttpLambdaIntegration('AuthIntegration', authFunction);
+    const dealsIntegration = new HttpLambdaIntegration('DealsIntegration', dealsFunction);
+    const uploadIntegration = new HttpLambdaIntegration('UploadIntegration', uploadFunction);
+    const agentIntegration = new HttpLambdaIntegration('AgentIntegration', agentFunction);
+
+    httpApi.addRoutes({ path: '/api/login', methods: [apigatewayv2.HttpMethod.GET], integration: authIntegration });
+    httpApi.addRoutes({ path: '/api/oauthcb', methods: [apigatewayv2.HttpMethod.GET], integration: authIntegration });
+    httpApi.addRoutes({ path: '/api/oauthcb/local', methods: [apigatewayv2.HttpMethod.GET], integration: authIntegration });
+    httpApi.addRoutes({ path: '/api/profile', methods: [apigatewayv2.HttpMethod.GET], integration: authIntegration });
+    httpApi.addRoutes({ path: '/api/logout', methods: [apigatewayv2.HttpMethod.GET], integration: authIntegration });
+
+    httpApi.addRoutes({ path: '/api/deals', methods: [apigatewayv2.HttpMethod.GET, apigatewayv2.HttpMethod.POST], integration: dealsIntegration });
+    httpApi.addRoutes({ path: '/api/deals/{dealKey}', methods: [apigatewayv2.HttpMethod.PUT, apigatewayv2.HttpMethod.DELETE], integration: dealsIntegration });
+
+    httpApi.addRoutes({ path: '/api/upload', methods: [apigatewayv2.HttpMethod.POST], integration: uploadIntegration });
+    httpApi.addRoutes({ path: '/api/agent', methods: [apigatewayv2.HttpMethod.POST], integration: agentIntegration });
+
+    // ── CloudFront /api/* behavior ───────────────────────────────────────────
+
+    const apiDomain = `${httpApi.httpApiId}.execute-api.${this.region}.amazonaws.com`;
+
+    distribution.addBehavior('/api/*', new origins.HttpOrigin(apiDomain, {
+      protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+    }), {
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
     });
 
     new CfnOutput(this, "CloudFrontUrl", {
       value: `https://${distribution.distributionDomainName}`,
       description: "CloudFront HTTPS URL (use this as the app entry point)",
+    });
+
+    new CfnOutput(this, "ApiUrl", {
+      value: httpApi.apiEndpoint,
+      description: "HTTP API default endpoint (for debugging)",
     });
   }
 }

@@ -6,12 +6,10 @@ describe('ApiStack', () => {
   let template: Template;
 
   beforeAll(() => {
-    delete process.env.STACK_VERSION;
     delete process.env.STACK_PREFIX;
-    delete process.env.npm_package_version;
 
     const app = new cdk.App();
-    const stack = new ApiStack(app, 'TestApiStack', { 
+    const stack = new ApiStack(app, 'TestApiStack', {
       appConfigSecretArn: 'arn:aws:secretsmanager:us-east-1:123456789012:secret:test/AppConfig-AAAAAA',
       appConfigSecretName: 'test/AppConfig',
     });
@@ -34,44 +32,79 @@ describe('ApiStack', () => {
     });
   });
 
+  // The template also contains CDK-generated helper Lambdas (BucketDeployment's
+  // handler, S3 auto-delete-objects handler) — filter to just the 4 API
+  // functions via the LOG_LEVEL env var that only they set.
+  const findApiFunctions = () => template.findResources('AWS::Lambda::Function', {
+    Properties: { Environment: { Variables: Match.objectLike({ LOG_LEVEL: 'debug' }) } },
+  });
+
+  describe('Lambda functions', () => {
+    test('creates 4 API Lambda functions', () => {
+      expect(Object.keys(findApiFunctions())).toHaveLength(4);
+    });
+
+    test('all 4 API functions use the nodejs22.x runtime and arm64 architecture', () => {
+      const functions = template.findResources('AWS::Lambda::Function', {
+        Properties: {
+          Runtime: 'nodejs22.x',
+          Architectures: ['arm64'],
+          Environment: { Variables: Match.objectLike({ LOG_LEVEL: 'debug' }) },
+        },
+      });
+      expect(Object.keys(functions)).toHaveLength(4);
+    });
+
+    test('auth function has AuthConfig secret name and session/state table env vars', () => {
+      template.hasResourceProperties('AWS::Lambda::Function', {
+        Environment: {
+          Variables: Match.objectLike({
+            AUTH_CONFIG_SECRET_NAME: Match.anyValue(),
+            PENDING_STATE_TABLE: Match.anyValue(),
+            SESSION_TABLE: Match.anyValue(),
+            NODE_ENV: 'production',
+          }),
+        },
+      });
+    });
+
+    test('agent function only has APP_CONFIG_SECRET_NAME table-independent env', () => {
+      template.hasResourceProperties('AWS::Lambda::Function', {
+        Environment: {
+          Variables: Match.objectLike({
+            APP_CONFIG_SECRET_NAME: 'test/AppConfig',
+          }),
+        },
+      });
+    });
+  });
+
   describe('IAM', () => {
-    test('task role trusts ecs-tasks service principal', () => {
+    test('lambda functions trust the lambda service principal', () => {
       template.hasResourceProperties('AWS::IAM::Role', {
         AssumeRolePolicyDocument: Match.objectLike({
           Statement: Match.arrayWith([
             Match.objectLike({
               Action: 'sts:AssumeRole',
-              Principal: { Service: 'ecs-tasks.amazonaws.com' },
+              Principal: { Service: 'lambda.amazonaws.com' },
             }),
           ]),
         }),
       });
     });
 
-    test('task role has AmazonECSTaskExecutionRolePolicy managed policy', () => {
-      template.hasResourceProperties('AWS::IAM::Role', {
-        ManagedPolicyArns: Match.arrayWith([
-          Match.objectLike({
-            'Fn::Join': Match.arrayWith([
-              Match.arrayWith([
-                Match.stringLikeRegexp('AmazonECSTaskExecutionRolePolicy'),
-              ]),
-            ]),
-          }),
-        ]),
-      });
+    test('creates a separate IAM role per API Lambda function (scoped, not shared)', () => {
+      const functions = findApiFunctions();
+      const roleRefs = Object.values(functions).map((fn: any) => fn.Properties.Role['Fn::GetAtt'][0]);
+      expect(new Set(roleRefs).size).toBe(4);
     });
 
-    test('task role policy grants CloudWatch log actions', () => {
+    test('at least one policy grants secretsmanager:GetSecretValue', () => {
       template.hasResourceProperties('AWS::IAM::Policy', {
         PolicyDocument: Match.objectLike({
           Statement: Match.arrayWith([
             Match.objectLike({
-              Action: Match.arrayWith([
-                'logs:CreateLogGroup',
-                'logs:CreateLogStream',
-                'logs:PutLogEvents',
-              ]),
+              Action: Match.arrayWith(['secretsmanager:GetSecretValue']),
               Effect: 'Allow',
             }),
           ]),
@@ -80,106 +113,81 @@ describe('ApiStack', () => {
     });
   });
 
-  describe('Networking', () => {
-    test('creates a single VPC', () => {
-      template.resourceCountIs('AWS::EC2::VPC', 1);
+  describe('HTTP API', () => {
+    test('creates a single HTTP API', () => {
+      template.resourceCountIs('AWS::ApiGatewayV2::Api', 1);
     });
 
-    test('creates 4 subnets (2 public + 2 private across 2 AZs)', () => {
-      template.resourceCountIs('AWS::EC2::Subnet', 4);
-    });
-  });
-
-  describe('ECS', () => {
-    test('creates a single ECS cluster', () => {
-      template.resourceCountIs('AWS::ECS::Cluster', 1);
+    test('creates the expected number of routes', () => {
+      // login, oauthcb, oauthcb/local, profile, logout, deals(GET+POST), deals/{dealKey}(PUT+DELETE), upload, agent
+      template.resourceCountIs('AWS::ApiGatewayV2::Route', 11);
     });
 
-    test('task definition specifies 256 cpu and 512 memory', () => {
-      template.hasResourceProperties('AWS::ECS::TaskDefinition', {
-        Cpu: '256',
-        Memory: '512',
+    test('creates a route for GET /api/deals', () => {
+      template.hasResourceProperties('AWS::ApiGatewayV2::Route', {
+        RouteKey: 'GET /api/deals',
       });
     });
 
-    test('container exposes port 3000 with correct environment variables', () => {
-      template.hasResourceProperties('AWS::ECS::TaskDefinition', {
-        ContainerDefinitions: Match.arrayWith([
-          Match.objectLike({
-            PortMappings: Match.arrayWith([
-              Match.objectLike({ ContainerPort: 3000, Protocol: 'tcp' }),
-            ]),
-            Environment: Match.arrayWith([
-              { Name: 'NODE_ENV', Value: 'production' },
-              { Name: 'STACK_VERSION', Value: 'unknown' },
-            ]),
-          }),
-        ]),
-      });
-    });
-
-    test('fargate service runs a single desired task', () => {
-      template.hasResourceProperties('AWS::ECS::Service', {
-        DesiredCount: 1,
-        LaunchType: 'FARGATE',
+    test('creates a route for POST /api/agent', () => {
+      template.hasResourceProperties('AWS::ApiGatewayV2::Route', {
+        RouteKey: 'POST /api/agent',
       });
     });
   });
 
-  describe('Application Load Balancer', () => {
-    test('creates an internet-facing ALB', () => {
-      template.hasResourceProperties('AWS::ElasticLoadBalancingV2::LoadBalancer', {
-        Scheme: 'internet-facing',
-        Type: 'application',
+  describe('S3 + UI deployment', () => {
+    test('creates a private S3 bucket for the UI', () => {
+      template.hasResourceProperties('AWS::S3::Bucket', {
+        PublicAccessBlockConfiguration: Match.objectLike({
+          BlockPublicAcls: true,
+          BlockPublicPolicy: true,
+        }),
       });
     });
 
-    test('target group health check uses /health path', () => {
-      template.hasResourceProperties('AWS::ElasticLoadBalancingV2::TargetGroup', {
-        HealthCheckPath: '/health',
-        TargetType: 'ip',
+    test('creates a BucketDeployment custom resource for ui/dist', () => {
+      template.resourceCountIs('Custom::CDKBucketDeployment', 1);
+    });
+  });
+
+  describe('CloudFront', () => {
+    test('distribution has a default behavior and an /api/* behavior', () => {
+      template.hasResourceProperties('AWS::CloudFront::Distribution', {
+        DistributionConfig: Match.objectLike({
+          DefaultCacheBehavior: Match.anyValue(),
+          CacheBehaviors: Match.arrayWith([
+            Match.objectLike({ PathPattern: '/api/*' }),
+          ]),
+        }),
       });
     });
 
-    test('ALB listener accepts traffic on port 80', () => {
-      template.hasResourceProperties('AWS::ElasticLoadBalancingV2::Listener', {
-        Port: 80,
-        Protocol: 'HTTP',
+    test('distribution has SPA-friendly 403/404 error responses to index.html', () => {
+      template.hasResourceProperties('AWS::CloudFront::Distribution', {
+        DistributionConfig: Match.objectLike({
+          CustomErrorResponses: Match.arrayWith([
+            Match.objectLike({ ErrorCode: 403, ResponseCode: 200, ResponsePagePath: '/index.html' }),
+            Match.objectLike({ ErrorCode: 404, ResponseCode: 200, ResponsePagePath: '/index.html' }),
+          ]),
+        }),
       });
     });
   });
 
-  describe('STACK_VERSION env var', () => {
-    test('passes explicit STACK_VERSION to container when set', () => {
-      delete process.env.STACK_PREFIX;
-      process.env.STACK_VERSION = '2.0.0-test';
-
-      const app = new cdk.App();
-      const stack = new ApiStack(app, 'VersionedTestStack', { 
-        appConfigSecretArn: 'arn:aws:secretsmanager:us-east-1:123456789012:secret:test/AppConfig-AAAAAA',
-        appConfigSecretName: 'test/AppConfig',
-      });
-      const t = Template.fromStack(stack);
-
-      t.hasResourceProperties('AWS::ECS::TaskDefinition', {
-        ContainerDefinitions: Match.arrayWith([
-          Match.objectLike({
-            Environment: Match.arrayWith([
-              { Name: 'STACK_VERSION', Value: '2.0.0-test' },
-            ]),
-          }),
-        ]),
-      });
-
-      delete process.env.STACK_VERSION;
+  describe('DynamoDB', () => {
+    test('creates 3 pay-per-request tables', () => {
+      template.resourceCountIs('AWS::DynamoDB::Table', 3);
     });
   });
 
   describe('Outputs', () => {
-    test('outputs LoadBalancerDns', () => {
-      template.hasOutput('LoadBalancerDns', {
-        Description: 'Public DNS of the Application Load Balancer',
-      });
+    test('outputs CloudFrontUrl', () => {
+      template.hasOutput('CloudFrontUrl', {});
+    });
+
+    test('outputs ApiUrl', () => {
+      template.hasOutput('ApiUrl', {});
     });
   });
 });

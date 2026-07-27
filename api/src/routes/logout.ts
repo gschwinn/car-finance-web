@@ -1,11 +1,12 @@
-import type { Request, Response } from 'express'
+import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, DeleteCommand } from '@aws-sdk/lib-dynamodb'
+import { getCookie, clearCookie, redirectResponse } from '../http'
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 
-export async function handleLogout(req: Request, res: Response): Promise<void> {
-  const sessionId: string | undefined = req.cookies?.session_id
+export async function handleLogout(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+  const sessionId = getCookie(event, 'session_id')
 
   if (sessionId) {
     await ddb.send(new DeleteCommand({
@@ -14,6 +15,5 @@ export async function handleLogout(req: Request, res: Response): Promise<void> {
     }))
   }
 
-  res.clearCookie('session_id')
-  res.redirect(302, '/')
+  return redirectResponse('/', { cookies: [clearCookie('session_id')] })
 }

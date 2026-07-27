@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import type { Request, Response } from 'express'
+import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 import { generateObject } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
 import { z } from 'zod'
@@ -7,11 +7,12 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
 import logger from '../logger'
 import { getAppConfig } from '../secrets'
+import { getCookie, jsonResponse, parseBody } from '../http'
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 
-async function getUserId(req: Request): Promise<string | null> {
-  const sessionId: string | undefined = req.cookies?.session_id
+async function getUserId(event: APIGatewayProxyEventV2): Promise<string | null> {
+  const sessionId = getCookie(event, 'session_id')
   if (!sessionId) return null
   const result = await ddb.send(new GetCommand({
     TableName: process.env.SESSION_TABLE,
@@ -61,22 +62,24 @@ const leaseExtractSchema = z.object({
   leaseTaxMethod: z.enum(['monthly', 'upfront_payments', 'upfront_full_price']).describe('How tax is applied; default monthly'),
 })
 
-export async function handleUploadDeal(req: Request, res: Response): Promise<void> {
-  const userId = await getUserId(req)
-  if (!userId) { res.status(401).json({ error: 'Unauthorized' }); return }
+export async function handleUploadDeal(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+  const userId = await getUserId(event)
+  if (!userId) return jsonResponse(401, { error: 'Unauthorized' })
 
-  const { type, content, imageBase64, mimeType } = req.body as {
+  const body = parseBody<{
     type: string
     content?: string
     imageBase64?: string
     mimeType?: string
-  }
+  }>(event)
+
+  const { type, content, imageBase64, mimeType } = body ?? {}
 
   if (type !== 'lease' && type !== 'purchase') {
-    res.status(400).json({ error: '"type" must be "purchase" or "lease"' }); return
+    return jsonResponse(400, { error: '"type" must be "purchase" or "lease"' })
   }
   if (!content && !imageBase64) {
-    res.status(400).json({ error: 'Must provide content or imageBase64' }); return
+    return jsonResponse(400, { error: 'Must provide content or imageBase64' })
   }
 
   const apiConfig = await getAppConfig()
@@ -110,7 +113,7 @@ export async function handleUploadDeal(req: Request, res: Response): Promise<voi
     extracted = object
   } catch (err) {
     logger.error('upload generateObject error', { err })
-    res.status(500).json({ error: 'Failed to analyze deal content' }); return
+    return jsonResponse(500, { error: 'Failed to analyze deal content' })
   }
 
   const id = randomUUID()
@@ -122,10 +125,10 @@ export async function handleUploadDeal(req: Request, res: Response): Promise<voi
     await ddb.send(new PutCommand({ TableName: process.env.DEALS_TABLE, Item: item }))
   } catch (err) {
     logger.error('upload ddb error', { err })
-    res.status(500).json({ error: 'Failed to save deal' }); return
+    return jsonResponse(500, { error: 'Failed to save deal' })
   }
 
   const { userId: _uid, dealKey: _dk, ...dealResponse } = item
   logger.info('upload deal created', { dealId: id, type })
-  res.status(201).json(dealResponse)
+  return jsonResponse(201, dealResponse)
 }
