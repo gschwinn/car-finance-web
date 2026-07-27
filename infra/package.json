@@ -9,15 +9,17 @@
     "deploy": "cdk deploy -c localhostAuth=true --all",
     "deploy:app": "cdk deploy -c localhostAuth=true -e ${STACK_PREFIX}CarFinanceStack",
     "deploy:secrets": "cdk deploy -e ${STACK_PREFIX}CarFinanceSecrets",
+    "deploy:prod": "cdk deploy --all",
     "diff": "cdk diff",
     "destroy": "cdk destroy"
   },
   "dependencies": {
-    "aws-cdk-lib": "^2.200.0",
+    "aws-cdk-lib": "^2.262.1",
     "constructs": "^10.0.0"
   },
   "devDependencies": {
-    "aws-cdk": "^2.200.0",
+    "aws-cdk": "^2.1133.0",
+    "esbuild": "^0.28.1",
     "ts-node": "^10.9.0",
     "vitest": "^3.0.0",
     "typescript": "^5.0.0"

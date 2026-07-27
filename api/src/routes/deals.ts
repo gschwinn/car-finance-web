@@ -1,5 +1,5 @@
 import { randomUUID } from 'crypto'
-import type { Request, Response } from 'express'
+import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import {
   DynamoDBDocumentClient,
@@ -8,11 +8,12 @@ import {
   PutCommand,
   DeleteCommand,
 } from '@aws-sdk/lib-dynamodb'
+import { getCookie, jsonResponse, noContentResponse, parseBody } from '../http'
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 
-async function getUserId(req: Request): Promise<string | null> {
-  const sessionId: string | undefined = req.cookies?.session_id
+async function getUserId(event: APIGatewayProxyEventV2): Promise<string | null> {
+  const sessionId = getCookie(event, 'session_id')
   if (!sessionId) return null
 
   const result = await ddb.send(new GetCommand({
@@ -25,11 +26,11 @@ async function getUserId(req: Request): Promise<string | null> {
   return session.userId as string
 }
 
-export async function handleListDeals(req: Request, res: Response): Promise<void> {
-  const userId = await getUserId(req)
-  if (!userId) { res.status(401).json({ error: 'Unauthorized' }); return }
+export async function handleListDeals(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+  const userId = await getUserId(event)
+  if (!userId) return jsonResponse(401, { error: 'Unauthorized' })
 
-  const type = req.query.type as string | undefined
+  const type = event.queryStringParameters?.type
   const keyCondition = type
     ? 'userId = :uid AND begins_with(dealKey, :prefix)'
     : 'userId = :uid'
@@ -42,16 +43,16 @@ export async function handleListDeals(req: Request, res: Response): Promise<void
     ExpressionAttributeValues: expressionValues,
   }))
 
-  res.json(result.Items ?? [])
+  return jsonResponse(200, result.Items ?? [])
 }
 
-export async function handleCreateDeal(req: Request, res: Response): Promise<void> {
-  const userId = await getUserId(req)
-  if (!userId) { res.status(401).json({ error: 'Unauthorized' }); return }
+export async function handleCreateDeal(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+  const userId = await getUserId(event)
+  if (!userId) return jsonResponse(401, { error: 'Unauthorized' })
 
-  const body = req.body
+  const body = parseBody<{ type?: string }>(event)
   if (!body?.type || (body.type !== 'lease' && body.type !== 'purchase')) {
-    res.status(400).json({ error: 'Invalid deal type' }); return
+    return jsonResponse(400, { error: 'Invalid deal type' })
   }
 
   const id = randomUUID()
@@ -65,15 +66,15 @@ export async function handleCreateDeal(req: Request, res: Response): Promise<voi
   }))
 
   const { userId: _uid, dealKey: _dk, ...dealResponse } = deal
-  res.status(201).json(dealResponse)
+  return jsonResponse(201, dealResponse)
 }
 
-export async function handleUpdateDeal(req: Request, res: Response): Promise<void> {
-  const userId = await getUserId(req)
-  if (!userId) { res.status(401).json({ error: 'Unauthorized' }); return }
+export async function handleUpdateDeal(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+  const userId = await getUserId(event)
+  if (!userId) return jsonResponse(401, { error: 'Unauthorized' })
 
-  const { dealKey } = req.params
-  const body = req.body
+  const dealKey = event.pathParameters?.dealKey
+  const body = parseBody<Record<string, unknown>>(event)
 
   await ddb.send(new PutCommand({
     TableName: process.env.DEALS_TABLE,
@@ -82,14 +83,14 @@ export async function handleUpdateDeal(req: Request, res: Response): Promise<voi
     ExpressionAttributeValues: { ':uid': userId },
   }))
 
-  res.status(204).send()
+  return noContentResponse()
 }
 
-export async function handleDeleteDeal(req: Request, res: Response): Promise<void> {
-  const userId = await getUserId(req)
-  if (!userId) { res.status(401).json({ error: 'Unauthorized' }); return }
+export async function handleDeleteDeal(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+  const userId = await getUserId(event)
+  if (!userId) return jsonResponse(401, { error: 'Unauthorized' })
 
-  const { dealKey } = req.params
+  const dealKey = event.pathParameters?.dealKey
 
   await ddb.send(new DeleteCommand({
     TableName: process.env.DEALS_TABLE,
@@ -98,5 +99,5 @@ export async function handleDeleteDeal(req: Request, res: Response): Promise<voi
     ExpressionAttributeValues: { ':uid': userId },
   }))
 
-  res.status(204).send()
+  return noContentResponse()
 }

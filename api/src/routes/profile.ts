@@ -1,15 +1,15 @@
-import type { Request, Response } from 'express'
+import type { APIGatewayProxyEventV2, APIGatewayProxyStructuredResultV2 } from 'aws-lambda'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb'
+import { getCookie, jsonResponse } from '../http'
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}))
 
-export async function handleProfile(_req: Request, res: Response): Promise<void> {
-  const sessionId: string | undefined = _req.cookies?.session_id
+export async function handleProfile(event: APIGatewayProxyEventV2): Promise<APIGatewayProxyStructuredResultV2> {
+  const sessionId = getCookie(event, 'session_id')
 
   if (!sessionId) {
-    res.json({ authenticated: false })
-    return
+    return jsonResponse(200, { authenticated: false })
   }
 
   const result = await ddb.send(new GetCommand({
@@ -19,9 +19,8 @@ export async function handleProfile(_req: Request, res: Response): Promise<void>
 
   const session = result.Item
   if (!session || session.expiresAt < Math.floor(Date.now() / 1000)) {
-    res.json({ authenticated: false })
-    return
+    return jsonResponse(200, { authenticated: false })
   }
 
-  res.json({ authenticated: true, id: session.userId, email: session.email })
+  return jsonResponse(200, { authenticated: true, id: session.userId, email: session.email })
 }
